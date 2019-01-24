@@ -25,8 +25,35 @@ const create_db = async (influxdb) => {
     }
 }
 
+const saveData = async (influxdb, url, data) => {
+console.log(2)
+    try {
+console.log(data);
+        const points = Object.keys(data).reduce((points, key) => {
+                points.push({
+                    measurement: key,
+                    tags: { url },
+                    fields: { value: data[key] }
+                });
+            return points;
+        }, []);
+
+console.log(points);
+console.log(points[0].fields.value);
+/*        const result = await influxdb.writePoints(points);*/
+const result = await influxdb.writePoints(data)
+//        logger.info(`Successfully saved ${influxdb.options.database} data for ${url}`);
+        console.log(`Successfully saved ${influxdb.options.database} data for ${url}`);
+        return result;
+    } catch (err) {
+//        logger.error(`Failed to save securityheaders data for ${url}`, err);
+        console.log(`Failed to save securityheaders data for ${url}`, err);
+        return Promise.reject(`Failed to save data into influxdb for ${url}`);
+    }
+}
 
 module.exports = {
     init,
-    create_db
+    create_db,
+    saveData
 }
