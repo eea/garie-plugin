@@ -25,23 +25,9 @@ const create_db = async (influxdb) => {
     }
 }
 
-const saveData = async (influxdb, url, data) => {
-console.log(2)
+const saveData = async (influxdb, url, measurement) => {
     try {
-console.log(data);
-        const points = Object.keys(data).reduce((points, key) => {
-                points.push({
-                    measurement: key,
-                    tags: { url },
-                    fields: { value: data[key] }
-                });
-            return points;
-        }, []);
-
-console.log(points);
-console.log(points[0].fields.value);
-/*        const result = await influxdb.writePoints(points);*/
-const result = await influxdb.writePoints(data)
+        const result = await influxdb.writePoints(measurement);
 //        logger.info(`Successfully saved ${influxdb.options.database} data for ${url}`);
         console.log(`Successfully saved ${influxdb.options.database} data for ${url}`);
         return result;

@@ -9,7 +9,7 @@ const getDataForAllUrls = async(options) => {
 //console.log(url)
         try {
             const data = await plugin_getData(item, options);
-console.log(1);
+            const measurement = await plugin_getMeasurement(url, options);
             await influx.saveData(options.influx_obj, url, data);
         } catch (err) {
 //            logger.error(`Failed to parse ${url}`, err);
