@@ -2,20 +2,28 @@ const CronJob = require('cron').CronJob;
 const extend = require('extend')
 const influx = require('./influx')
 const { plugin_getData } = require('./plugin')
+const numCPUs = require('os').cpus().length;
+const mapAsync = require('./utils/map-async');
+
+
+async function getDataForItem(item){
+    try{
+        const { url } = item;
+        const data = await plugin_getData(url, item);
+        const measurement = await plugin_getMeasurement(url, options);
+        await influx.saveData(options.influx_obj, url, data);
+    } catch (err) {
+        console.log(`Failed to parse ${url}`, err);
+    }
+}
 
 const getDataForAllUrls = async(options) => {
-    for (const item of options.urls) {
-        const { url } = item;
-//console.log(url)
-        try {
-            const data = await plugin_getData(item, options);
-            const measurement = await plugin_getMeasurement(url, options);
-            await influx.saveData(options.influx_obj, url, data);
-        } catch (err) {
-//            logger.error(`Failed to parse ${url}`, err);
-        }
+    try{
+        await mapAsync(options, item => getDataForItem(item), { concurrency: numCPUs });
+        console.log('Finished processed all CRON urls.');
+    } catch (err){
+        console.log(err);
     }
-
 }
 
 const init = async(options) => {
@@ -36,12 +44,23 @@ const init = async(options) => {
     extend(settings, options);
     const influx_obj = influx.init(settings.database)
     await influx.create_db(influx_obj);
+
+    var items = [];
+    for (var i = 0; i <= settings.config.urls.length-1; i++){
+        const url = settings.config.urls[i];
+        var tmp_item = {
+            url: url,
+            influx_obj: influx_obj,
+            getData: settings.getData
+        }
+        items.push(tmp_item)
+    }
     try {
         if (settings.config.cron) {
             return new CronJob(
                 settings.config.cron,
                 async () => {
-                    getDataForAllUrls({urls:settings.config.urls, influx_obj:influx_obj, getData:settings.getData});
+                    getDataForAllUrls(items);
                 },
                 null,
                 true,
