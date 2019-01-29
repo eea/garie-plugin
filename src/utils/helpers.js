@@ -1,3 +1,7 @@
+const path = require('path');
+const urlParser = require('url');
+const isEmpty = require('lodash.isempty');
+
 function pathNameFromUrl(url) {
   const parsedUrl = urlParser.parse(url),
     pathSegments = parsedUrl.pathname.split('/');
@@ -15,6 +19,27 @@ function pathNameFromUrl(url) {
   return pathSegments.filter(Boolean).join('-');
 }
 
-function reportDir(url) {
-    return path.join(__dirname, '../../reports/linksintegrity-results', pathNameFromUrl(url));
+function reportDir(options) {
+    const { app_name } = options;
+    const { url } = options;
+
+    return path.join(options.app_root, 'reports', app_name, pathNameFromUrl(url));
+}
+
+function newestDir(options) {
+    const { app_name } = options;
+    const { url } = options;
+
+    const dir = path.join(options.app_root, 'reports', app_name, pathNameFromUrl(url));
+
+    const folders = fs.readdirSync(dir);
+
+    const newestFolder = folders[folders.length - 1];
+
+    return newestFolder;
+}
+
+module.exports = {
+    reportDir,
+    newestDir
 }

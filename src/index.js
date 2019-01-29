@@ -7,11 +7,13 @@ const mapAsync = require('./utils/map-async');
 
 
 async function getDataForItem(item){
+console.log('getdataforitem');
+console.log(item);
+    const { url } = item.url_settings;
     try{
-        const { url } = item;
-        const data = await plugin_getData(url, item);
-        const measurement = await plugin_getMeasurement(url, options);
-        await influx.saveData(options.influx_obj, url, data);
+        const data = await plugin_getData(item);
+//        const measurement = await plugin_getMeasurement(url, item);
+//        await influx.saveData(options.influx_obj, url, data);
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
     }
@@ -49,9 +51,11 @@ const init = async(options) => {
     for (var i = 0; i <= settings.config.urls.length-1; i++){
         const url = settings.config.urls[i];
         var tmp_item = {
-            url: url,
+            url_settings: url,
             influx_obj: influx_obj,
-            getData: settings.getData
+            getData: settings.getData,
+            app_name: settings.app_name,
+            app_root: settings.app_root
         }
         items.push(tmp_item)
     }
