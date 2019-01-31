@@ -12,7 +12,6 @@ const plugin_getData = async (item) => {
 
             resolve(data)
         } catch (err) {
-//console.log("errrr:", err);
             const { url } = item.url_settings;
             console.log(`Failed to get data for ${url}`, err);
             reject(`Failed to get data for ${url}`);
@@ -20,13 +19,12 @@ const plugin_getData = async (item) => {
     });
 };
 
-const plugin_getNewestFile = async (options) => {
-
-}
-const plugin_getMeasurement = async (item, options) => {
+const plugin_getMeasurement = async (item, data) => {
+    const { url } = item.url_settings;
     return new Promise(async (resolve, reject) => {
         try {
-            if (options.getMeasurement){
+            if (item.getMeasurement){
+                return item.getMeasurement(item);
             }
             else {
                 const points = Object.keys(data).reduce((points, key) => {
@@ -37,6 +35,7 @@ const plugin_getMeasurement = async (item, options) => {
                     });
                     return points;
                 }, []);
+                resolve(points);
             }
         } catch (err) {
             console.log(`Failed to convert data to measurement for ${url}`, err);
@@ -46,5 +45,6 @@ const plugin_getMeasurement = async (item, options) => {
 };
 
 module.exports = {
-    plugin_getData
+    plugin_getData,
+    plugin_getMeasurement
 };

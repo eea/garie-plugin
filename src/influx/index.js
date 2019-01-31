@@ -28,7 +28,7 @@ const saveData = async (influxdb, url, measurement) => {
         console.log(`Successfully saved ${influxdb.options.database} data for ${url}`);
         return result;
     } catch (err) {
-        console.log(`Failed to save securityheaders data for ${url}`, err);
+        console.log(`Failed to save data for ${url}`, err);
         return Promise.reject(`Failed to save data into influxdb for ${url}`);
     }
 }

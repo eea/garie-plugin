@@ -2,18 +2,18 @@ const CronJob = require('cron').CronJob;
 const extend = require('extend')
 const influx = require('./influx')
 const { plugin_getData } = require('./plugin')
+const { plugin_getMeasurement } = require('./plugin')
 const numCPUs = require('os').cpus().length;
 const mapAsync = require('./utils/map-async');
-
+const utils = require('./utils');
 
 async function getDataForItem(item){
-console.log('getdataforitem');
-console.log(item);
+
     const { url } = item.url_settings;
     try{
         const data = await plugin_getData(item);
-//        const measurement = await plugin_getMeasurement(url, item);
-//        await influx.saveData(options.influx_obj, url, data);
+        const measurement = await plugin_getMeasurement(item, data);
+        await influx.saveData(item.influx_obj, url, measurement);
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
     }
@@ -80,5 +80,6 @@ const init = async(options) => {
 }
 
 module.exports = {
-    init
+    init,
+    utils
 };

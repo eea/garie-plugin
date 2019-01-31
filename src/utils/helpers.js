@@ -1,6 +1,9 @@
+const fs = require('fs');
 const path = require('path');
 const urlParser = require('url');
 const isEmpty = require('lodash.isempty');
+const child_process = require('child_process');
+
 
 function pathNameFromUrl(url) {
   const parsedUrl = urlParser.parse(url),
@@ -39,7 +42,59 @@ function newestDir(options) {
     return newestFolder;
 }
 
+const executeScript = async (options) => {
+    const { url } = options;
+    return new Promise(async (resolve, reject) => {
+        try {
+
+            const { script } = options;
+            const { reportDir } = options;
+            const { params } = options;
+            const { callback } = options;
+
+            const command = [ script, url, reportDir ].concat(params);
+
+            const child = child_process.spawn('bash', command);
+
+            child.on('exit', async () => {
+                const data = await options.callback({url: url, reportDir: reportDir});
+                resolve(data);
+            });
+
+            child.stdout.pipe(process.stdout);
+            child.stderr.pipe(process.stderr);
+        } catch (err) {
+            console.log(`Failed to get data for ${url}`, err);
+            reject(`Failed to get data for ${url}`);
+        }
+    });
+}
+
+const getNewestFile = (options) => {
+    try {
+        const { url } = options;
+        const { fileName } = options;
+        const { reportDir } = options;
+
+        const folders = fs.readdirSync(reportDir);
+
+        const newestFolder = folders[folders.length - 1];
+
+        const newestFile = fs.readFileSync(path.join(reportDir, newestFolder, fileName));
+
+        return Promise.resolve(newestFile);
+    } catch (err) {
+        console.log(err);
+        const message = `Failed to get linksintegrity file for ${url}`;
+        logger.warn(message);
+        return Promise.reject(message);
+    }
+};
+
+
 module.exports = {
     reportDir,
-    newestDir
+    newestDir,
+    executeScript,
+    getNewestFile
 }
