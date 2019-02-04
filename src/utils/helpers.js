@@ -25,15 +25,17 @@ function pathNameFromUrl(url) {
 function reportDir(options) {
     const { app_name } = options;
     const { url } = options;
+    const { app_root } = options;
 
-    return path.join(options.app_root, 'reports', app_name, pathNameFromUrl(url));
+    return path.join(app_root, 'reports', app_name, pathNameFromUrl(url));
 }
 
 function newestDir(options) {
     const { app_name } = options;
     const { url } = options;
+    const { app_root } = options;
 
-    const dir = path.join(options.app_root, 'reports', app_name, pathNameFromUrl(url));
+    const dir = path.join(app_root, 'reports', app_name, pathNameFromUrl(url));
 
     const folders = fs.readdirSync(dir);
 
@@ -57,7 +59,7 @@ const executeScript = async (options) => {
             const child = child_process.spawn('bash', command);
 
             child.on('exit', async () => {
-                const data = await options.callback({url: url, reportDir: reportDir});
+                const data = await callback({url: url, reportDir: reportDir});
                 resolve(data);
             });
 
@@ -85,7 +87,7 @@ const getNewestFile = (options) => {
         return Promise.resolve(newestFile);
     } catch (err) {
         console.log(err);
-        const message = `Failed to get linksintegrity file for ${url}`;
+        const message = `Failed to get file for ${url}`;
         logger.warn(message);
         return Promise.reject(message);
     }
@@ -96,5 +98,6 @@ module.exports = {
     reportDir,
     newestDir,
     executeScript,
-    getNewestFile
+    getNewestFile,
+    pathNameFromUrl
 }
