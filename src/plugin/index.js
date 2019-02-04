@@ -8,7 +8,7 @@ const plugin_getData = async (item) => {
                 reportDir : reportDir ({ url: item.url_settings.url, app_name: item.app_name, app_root: item.app_root })
             }
 
-            await item.getData(options);
+            var data = await item.getData(options);
 
             resolve(data)
         } catch (err) {
@@ -24,7 +24,8 @@ const plugin_getMeasurement = async (item, data) => {
     return new Promise(async (resolve, reject) => {
         try {
             if (item.getMeasurement){
-                return item.getMeasurement(item);
+                const measurement = await item.getMeasurement(item, data)
+                resolve ( measurement );
             }
             else {
                 const points = Object.keys(data).reduce((points, key) => {
