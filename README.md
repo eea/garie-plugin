@@ -1,8 +1,8 @@
-Generic garie plugin package
+# Generic garie plugin package
 
-Usage:
+## Setting up the repo:
 Create a github repo for your plugin, for the tutorial we will call it: "my-garie-plugin"
-Add a Dockerfile:
+### Add a Dockerfile:
 ```
 FROM node:8.10.0
 
@@ -25,7 +25,8 @@ ENTRYPOINT ["/usr/src/my-garie-plugin/docker-entrypoint.sh"]
 
 CMD ["npm", "start"]
 ```
-Add the docker-entrypoint.sh. This is required so we can pass the config.json as an env from docker-compose or rancher:
+
+### Add the docker-entrypoint.sh. This is required so we can pass the config.json as an env from docker-compose or rancher:
 ```
 #!/bin/sh
 set -e
@@ -37,7 +38,8 @@ fi
 
 exec "$@"
 ```
-Add your config.json (for development, and as an example, what extra parameters are required for each url)
+
+### Add your config.json (for development, and as an example, what extra parameters are required for each url)
 ```
 {
   "cron": "0 */4 * * *",
@@ -53,7 +55,8 @@ Add your config.json (for development, and as an example, what extra parameters 
   ]
 }
 ```
-Add a jest.config.json (for testing)
+
+### Add a jest.config.json (for testing)
 ```
 {
     "bail": true,
@@ -61,7 +64,8 @@ Add a jest.config.json (for testing)
     "coveragePathIgnorePatterns": ["/node_modules/"]
 }
 ```
-Add a folder, called src, and create an index.js file in it:
+
+### Add a folder, called src, and create an index.js file in it:
 ```
 const garie_plugin = require('garie-plugin')
 const path = require('path');
@@ -74,9 +78,10 @@ const myGetData = async (options) => {
     });
 };
 
-const mock_getMeasurement_custom = async (item, data) => {
+const myGetMeasurement = async (item, data) => {
 // custom code to build a measurement for the url
 };
+
 var plugin_options = {
     getData: myGetData,
     getMeasurement: myGetMeasurement, //optional
@@ -84,8 +89,11 @@ var plugin_options = {
     app_root: app_root: path.join(__dirname, '..'),
     config: config
 };
+
+garie_plugin.init(plugin_options)
 ```
-In some cases, the data for an url is retrieved with an app running inside a docker container. For this we use a shell script, something like:
+
+### In some cases, the data for an url is retrieved with an app running inside a docker container. For this we use a shell script, something like:
 ```
 #!/usr/bin/env bash
 echo "Start getting data"
@@ -104,7 +112,8 @@ echo "Finished getting data for: $1"
 
 exit 0
 ```
-So your directory should look like:
+
+### At this point your directory should look like:
 <pre>
     └── my-garie-plugin
         ├── Dockerfile
@@ -117,3 +126,18 @@ So your directory should look like:
               ├── index.js
               └── myscript.sh
 </pre>
+
+## Helper functions
+Some common functions, what are used in most of our plugins are available in utils.helpers. These can be accessed like this:
+```
+const garie_plugin = require('garie-plugin');
+options = {...};
+garie_plugin.utils.helpers.getNewestFile(options);
+```
+
+The available functions are:
+reportDir
+newestDir
+executeScript
+getNewestFile
+pathNameFromUrl
