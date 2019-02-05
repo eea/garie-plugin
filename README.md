@@ -3,7 +3,8 @@
 # Generic garie plugin package
 
 ## Setting up the repo:
-Create a github repo for your plugin, for the tutorial we will call it: "my_garie_plugin"
+Create a github repo for your plugin.
+
 Copy the contents of https://github.com/eea/garie-plugin/tree/master/skelet into your repo.
 Look for <my_garie_plugin> and modify it for your plugin.
 
