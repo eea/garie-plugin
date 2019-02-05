@@ -1,4 +1,5 @@
 
+
 # Generic garie plugin package
 
 ## Setting up the repo:
@@ -74,8 +75,14 @@ const config = require('./config');
 
 const myGetData = async (options) => {
     const { url } = options.url_settings;
-    return new Promise(async (resolve, reject) => {
-// custom code for getting the data for a url
+	return new Promise(async (resolve, reject) => {
+	    try {
+// custom code to query for a specific url			
+            resolve(data);
+        } catch (err) {
+            console.log(`Failed to get data for ${url}`, err);
+            reject(`Failed to get data for ${url}`);
+        }
     });
 };
 
@@ -174,4 +181,16 @@ The available functions are:
 		}
 	```
 
+## Implementing your plugin functionality
+In the index.js we have the myGetData function. It receives as parameter an object with the structure:
 
+```
+	{
+		url_settings:{
+			url:string, // the url for which we are running our query
+			<extra_options> // optional extra parameters
+		},
+		reportDir: string // location where the reports should be stored
+	}
+```
+Now we have now 2 possibilities, we implement the query in nodejs, or we have a shell script (maybe with docker) we want to execute.
