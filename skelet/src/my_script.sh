@@ -3,7 +3,7 @@ echo "Start getting data"
 
 echo "Getting data for: $1"
 
-echo "Recursion depth: $3"
+echo "Extra parameter: $3"
 
 report_location=$2/$(date +"%FT%H%M%S+0000")
 
