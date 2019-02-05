@@ -3,6 +3,12 @@ const path = require('path');
 
 const utils = require ('.')
 
+const getFile = async (options) => {
+    options.fileName = 'test.txt';
+    const file = await utils.helpers.getNewestFile(options);
+    return file;
+}
+
 
 describe('utils', () => {
     it('test the helper functions', async () => {
@@ -20,28 +26,32 @@ describe('utils', () => {
 
         fs.ensureDirSync(reportDir);
 
-        var dir_1 = reportDir + "/dir_1";
-        fs.ensureDirSync(dir_1);
-        fs.writeFileSync(path.join(dir_1, 'test.txt'), "test 1");
+        options = { script: path.join(__dirname, './test.sh'),
+            url: "http://www.test.com",
+            reportDir: reportDir,
+            params: [ "test_param1" ],
+            callback: getFile
+            }
 
-        var dir_2 = reportDir + "/dir_2";
-        fs.ensureDirSync(dir_2);
-        fs.writeFileSync(path.join(dir_2, 'test.txt'), "test 2");
+        options = { script: path.join(__dirname, './test.sh'),
+            url: "http://www.test.com",
+            reportDir: reportDir,
+            params: [ "test_param1" ],
+            callback: getFile
+            }
 
-        var dir_3 = reportDir + "/dir_3";
-        fs.ensureDirSync(dir_3);
-        fs.writeFileSync(path.join(dir_3, 'test.txt'), "test 3");
+        data = await utils.helpers.executeScript(options);
+        expect(data.toString().trim()).toEqual("http://www.test.com test_param1");
 
-        var newestDir = utils.helpers.newestDir(options);
-        expect(newestDir).toEqual('dir_3');
+        options = { script: path.join(__dirname, './test.sh'),
+            url: "http://www.test.com",
+            reportDir: reportDir,
+            params: [ "test_param2" ],
+            callback: getFile
+            }
 
-        var file_options = {
-            url : "http://www.test.com",
-            fileName : "test.txt",
-            reportDir: reportDir
-        };
-        const file = await utils.helpers.getNewestFile(file_options);
-        expect(file.toString()).toEqual('test 3');
+        data = await utils.helpers.executeScript(options);
+        expect(data.toString().trim()).toEqual("http://www.test.com test_param2");
 
     });
 });
