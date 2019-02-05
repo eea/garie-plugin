@@ -1,3 +1,4 @@
+
 # Generic garie plugin package
 
 ## Setting up the repo:
@@ -136,8 +137,31 @@ garie_plugin.utils.helpers.getNewestFile(options);
 ```
 
 The available functions are:
-reportDir
-newestDir
-executeScript
-getNewestFile
-pathNameFromUrl
+- pathNameFromUrl(url) - takes an url as parameter and returns the folder name built on it
+- reportDir(options)	- takes an object as parameter and returns the folder name where the reports should be stored
+	```		
+		{
+			app_name: string,
+			url: string,
+			app_root: string
+		}
+	```
+- newestDir(options) - takes an object as parameter and returns the newest folder
+	```		
+		{
+			app_name: string,
+			url: string,
+			app_root: string
+		}
+	```
+- getNewestFile(options) - takes an object as parameter and returns the newest report file. Not the name of the file, but the contents of it
+	```		
+		{
+			url: string,
+			filename: string,
+			reportDir: string,
+		}
+	```
+
+- executeScript(options) 
+
