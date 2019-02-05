@@ -163,5 +163,15 @@ The available functions are:
 		}
 	```
 
-- executeScript(options) 
+- executeScript(options) - takes an object as parameter, executes a shell script, when the script is finished, it calls the "callback" method from the options, and returns the response of the callback method
+	```		
+		{
+			script: string,
+			url: string,
+			reportDir: string,
+			params: [], //optional
+			callback: async function
+		}
+	```
+
 
