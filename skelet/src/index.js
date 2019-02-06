@@ -25,12 +25,12 @@ const myGetFile = async (options) => {
     return getResults(file);
 }
 
-const myGetData = async (options) => {
-    const { url } = options.url_settings;
+const myGetData = async (item) => {
+    const { url } = item.url_settings;
     return new Promise(async (resolve, reject) => {
         try {
-            const { extra_option } = options.url_settings;
-            const { reportDir } = options;
+            const { extra_option } = item.url_settings;
+            const { reportDir } = item;
 
             const options = { script: path.join(__dirname, './my_script.sh'),
                         url: url,
