@@ -1,10 +1,7 @@
-
-
 # Generic garie plugin package
 
 ## Setting up the repo:
-Create a github repo for your plugin.
-
+Create a github repo for your plugin, for the tutorial we will call it: "my_garie_plugin"
 Copy the contents of https://github.com/eea/garie-plugin/tree/master/skelet into your repo.
 Look for <my_garie_plugin> and modify it for your plugin.
 
@@ -56,7 +53,6 @@ The available functions are:
 
 ## Implementing your plugin functionality
 In the index.js we have the myGetData function. It receives as parameter an object with the structure:
-
 ```
 	{
 		url_settings:{
@@ -66,4 +62,39 @@ In the index.js we have the myGetData function. It receives as parameter an obje
 		reportDir: string // location where the reports should be stored
 	}
 ```
-Now we have now 2 possibilities, we implement the query in nodejs, or we have a shell script (maybe with docker) we want to execute.
+There are 2 ways to make the queries for the urls
+1. with **nodejs** code, in which case the logic should be implemented entirely using javascript
+2. with a **shell script**, in which case in the shell script any external tool (even a docker run command) can be executed. In this case we have a helper function: **executeScript** what is recommended to be used (see inside the myGetData function in https://github.com/eea/garie-plugin/blob/master/skelet/src/index.js) .
+In both cases, **nodejs** or **shell script**, the myGetData function should return an object with the form:
+	```
+	{
+		'<my_measurement>': '<value>'
+	}
+	```
+	If for some reason your structure is different, ex. there are more values to be stored, you have to implement your specific, myGetMeasurement function. It should return an object with the form:
+	```
+		[
+			{
+				"fields":{
+					"sentry_events":2,
+					"total_visits":100,
+					"value":2
+				},
+				"measurement":"JsEvents/TotalVisits",
+				"tags":{
+					"url":"www.test.com"
+				}
+		},
+		{
+			"fields":{
+				"sentry_events":2,
+				"total_visits":100,
+				"value":2
+			},
+			"measurement":"ServerErrors/TotalVisits",
+			"tags":{
+				"url":"www.test.com"
+			}
+		}
+	]
+	```

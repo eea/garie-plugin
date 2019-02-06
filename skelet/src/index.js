@@ -5,9 +5,25 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
 
-const myGetMeasurement = async (options) => {
+/* optional, only if you should store more values on a single row */
+const myGetMeasurement = async (item, data) => {
+    const { url } = item.url_settings;
+    return new Promise(async (resolve, reject) => {
+        try {
 // custom code to build a measurement for the url
+            resolve(data);
+        } catch (err) {
+            console.log(`Failed to get data for ${url}`, err);
+            reject(`Failed to get data for ${url}`);
+        }
+    });
 };
+
+const myGetFile = async (options) => {
+    options.fileName = '<my_garie_plugin>.txt';
+    const file = await garie_plugin.utils.helpers.getNewestFile(options);
+    return getResults(file);
+}
 
 const myGetData = async (options) => {
     const { url } = options.url_settings;
@@ -46,7 +62,7 @@ const main = async () => {
   garie_plugin.init({
     database:'<my_garie_plugin>',
     getData:myGetData,
-    getMeasurement: myGetMeasurement,
+    getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row */
     app_name:'<my_garie_plugin>',
     app_root: path.join(__dirname, '..'),
     config:config
