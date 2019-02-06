@@ -6,12 +6,23 @@ const myGetMeasurement = async (options) => {
 // custom code to build a measurement for the url
 };
 
-}
 const myGetData = async (options) => {
     const { url } = options.url_settings;
     return new Promise(async (resolve, reject) => {
         try {
+            const { extra_option } = options.url_settings;
+            const { reportDir } = options;
+
+            const options = { script: path.join(__dirname, './my_script.sh'),
+                        url: url,
+                        reportDir: reportDir,
+                        params: [ extra_option ],
+                        callback: myGetFile
+                    }
+            data = await garie_plugin.utils.helpers.executeScript(options);
+
 // my code to get the data for a url
+
             resolve(data);
         } catch (err) {
             console.log(`Failed to get data for ${url}`, err);
@@ -21,4 +32,4 @@ const myGetData = async (options) => {
 };
 
 
-garie_plugin.init({getData:myGetData, getMeasurement: myGetMeasurement, app_name:'<my_garie_plugin>', app_root: path.join(__dirname, '..'), config:config});
+garie_plugin.init({database:'<my_garie_plugin>', getData:myGetData, getMeasurement: myGetMeasurement, app_name:'<my_garie_plugin>', app_root: path.join(__dirname, '..'), config:config});
