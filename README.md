@@ -1,3 +1,4 @@
+
 # Generic garie plugin package
 
 ## Setting up the repo:
@@ -98,3 +99,24 @@ In both cases, **nodejs** or **shell script**, the myGetData function should ret
 		}
 	]
 	```
+
+## Hints for developing the plugin:
+
+While developing the plugin you can use the docker-compose-dev.yml.
+It will:
+	- build locally the image for the plugin;
+	- mount your source code and local config.json inside your container, so it can be tested without rebuilding and restarting the image;
+	- instead of starting the app, and crashing if something wrong, just starts the container, with a 'bash -c "tail -f /dev/null"' command, what will keep the container alive.
+
+In a terminal (#1) you can start the container with:
+```
+docker-compose -f docker-compose-dev.yml up
+```
+In another terminal (#2):
+```
+docker-compose -f docker-compose-dev.yml exec <my_garie_plugin> bash
+```
+On your host you can modify the source code and on terminal #2 you can manually start the plugin with
+```
+npm start
+```
