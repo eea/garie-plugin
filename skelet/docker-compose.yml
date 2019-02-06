@@ -7,6 +7,7 @@ services:
         environment:
             - INFLUXDB_ADMIN_USER=admin
             - INFLUXDB_ADMIN_PASSWORD=admin
+
     <my_garie_plugin>:
         image: '<my_garie_plugin>:latest'
         privileged: true

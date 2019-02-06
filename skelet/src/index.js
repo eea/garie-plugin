@@ -1,6 +1,9 @@
 const garie_plugin = require('garie-plugin')
 const path = require('path');
 const config = require('../config');
+const express = require('express');
+const bodyParser = require('body-parser');
+const serveIndex = require('serve-index');
 
 const myGetMeasurement = async (options) => {
 // custom code to build a measurement for the url
@@ -32,4 +35,27 @@ const myGetData = async (options) => {
 };
 
 
-garie_plugin.init({database:'<my_garie_plugin>', getData:myGetData, getMeasurement: myGetMeasurement, app_name:'<my_garie_plugin>', app_root: path.join(__dirname, '..'), config:config});
+
+console.log("Start");
+
+
+const app = express();
+app.use('/reports', express.static('reports'), serveIndex('reports', { icons: true }));
+
+const main = async () => {
+  garie_plugin.init({
+    database:'<my_garie_plugin>',
+    getData:myGetData,
+    getMeasurement: myGetMeasurement,
+    app_name:'<my_garie_plugin>',
+    app_root: path.join(__dirname, '..'),
+    config:config
+  });
+}
+
+if (process.env.ENV !== 'test') {
+  app.listen(3000, async () => {
+    console.log('Application listening on port 3000');
+    await main();
+  });
+}
