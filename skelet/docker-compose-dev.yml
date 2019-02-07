@@ -8,12 +8,12 @@ services:
             - INFLUXDB_ADMIN_USER=admin
             - INFLUXDB_ADMIN_PASSWORD=admin
 
-    <my_garie_plugin>:
+    garie_plugin:
         build: .
         privileged: true
         volumes:
-            - ./src:/usr/src/<my_garie_plugin>/src:z
-            - ./config.json:/usr/src/<my_garie_plugin>/config.json:z
+            - ./src:/usr/src/garie_plugin/src:z
+            - ./config.json:/usr/src/garie_plugin/config.json:z
             - /var/run/docker.sock:/run/docker.sock
             - /usr/bin/docker:/bin/docker
         ports:

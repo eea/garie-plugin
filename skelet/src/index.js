@@ -62,7 +62,7 @@ const main = async () => {
   garie_plugin.init({
     database:'<my_garie_plugin>',
     getData:myGetData,
-    getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row */
+    getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
     app_name:'<my_garie_plugin>',
     app_root: path.join(__dirname, '..'),
     config:config
