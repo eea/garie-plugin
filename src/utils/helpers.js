@@ -3,6 +3,7 @@ const path = require('path');
 const urlParser = require('url');
 const isEmpty = require('lodash.isempty');
 const child_process = require('child_process');
+const dateFormat = require('dateformat');
 
 
 function pathNameFromUrl(url) {
@@ -28,6 +29,12 @@ function reportDir(options) {
     const { app_root } = options;
 
     return path.join(app_root, 'reports', app_name, pathNameFromUrl(url));
+}
+
+function reportDirNow(reportDir) {
+    date = new Date();
+
+    return path.join(reportDir, dateFormat(date, "isoUtcDateTime"));
 }
 
 function newestDir(options) {
@@ -96,6 +103,7 @@ const getNewestFile = (options) => {
 
 module.exports = {
     reportDir,
+    reportDirNow,
     newestDir,
     executeScript,
     getNewestFile,

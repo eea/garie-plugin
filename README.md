@@ -24,6 +24,7 @@ The available functions are:
 			app_root: string
 		}
 	```
+- reportDirNow(reportDir) - takes the folder name and generates a new foldername with the current time
 - newestDir(options) - takes an object as parameter and returns the newest folder
 	```		
 		{
