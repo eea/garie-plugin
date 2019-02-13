@@ -28,7 +28,9 @@
         "serve-index": "^1.9.1",
         "winston": "^3.0.0",
         "lodash.isempty": "4.4.0",
-        "extend": "3.0.2"
+        "extend": "3.0.2",
+        "dateformat": "*"
+
     },
     "devDependencies": {
         "codecov": "^3.0.0",
