@@ -54,6 +54,7 @@ const init = async(options) => {
             url_settings: url,
             influx_obj: influx_obj,
             getData: settings.getData,
+            getMeasurement: settings.getMeasurement,
             app_name: settings.app_name,
             app_root: settings.app_root
         }
