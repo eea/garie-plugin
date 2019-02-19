@@ -49,6 +49,7 @@ The available functions are:
 			url: string,
 			reportDir: string,
 			params: [], //optional
+                        timeout: number, //optional timeout in seconds, default 60 seconds
 			callback: async function
 		}
 	```

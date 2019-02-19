@@ -59,16 +59,28 @@ const executeScript = async (options) => {
             const { reportDir } = options;
             const { params } = options;
             const { callback } = options;
+            const { timeout = 60 } = options;
 
             const command = [ script, url, reportDir ].concat(params);
 
             const child = child_process.spawn('bash', command);
 
-            child.on('exit', async () => {
-                const data = await callback({url: url, reportDir: reportDir});
-                resolve(data);
+            child.on('exit', async (code) => {
+                if (code === 0){
+                    const data = await callback({url: url, reportDir: reportDir});
+                    resolve(data);
+                }
+                else {
+                    console.log(`Timeout while trying to get data for ${url}`);
+                    reject(`Timeout while trying to get data for ${url}`);
+                }
             });
 
+            if (timeout > 0){
+                setTimeout(function(){
+                        child.kill(9);
+                    }, timeout * 1000);
+            }
             child.stdout.pipe(process.stdout);
             child.stderr.pipe(process.stderr);
         } catch (err) {
