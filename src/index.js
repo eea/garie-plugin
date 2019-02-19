@@ -30,7 +30,7 @@ const getDataForAllUrls = async(options) => {
 
 const init = async(options) => {
     var settings = {
-        database:'test',
+        db_name:'test',
         config:{
             "cron": "0 */4 * * *",
             "urls": [
@@ -44,7 +44,7 @@ const init = async(options) => {
         }
     }
     extend(settings, options);
-    const influx_obj = influx.init(settings.database)
+    const influx_obj = influx.init(settings.db_name)
     await influx.create_db(influx_obj);
 
     var items = [];
@@ -55,7 +55,8 @@ const init = async(options) => {
             influx_obj: influx_obj,
             getData: settings.getData,
             getMeasurement: settings.getMeasurement,
-            app_name: settings.app_name,
+            plugin_name: settings.plugin_name,
+            report_folder_name: settings.report_folder_name,
             app_root: settings.app_root
         }
         items.push(tmp_item)

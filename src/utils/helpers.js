@@ -4,7 +4,7 @@ const urlParser = require('url');
 const isEmpty = require('lodash.isempty');
 const child_process = require('child_process');
 const dateFormat = require('dateformat');
-
+const crypto = require('crypto');
 
 function pathNameFromUrl(url) {
   const parsedUrl = urlParser.parse(url),
@@ -24,11 +24,11 @@ function pathNameFromUrl(url) {
 }
 
 function reportDir(options) {
-    const { app_name } = options;
+    const { report_folder_name } = options;
     const { url } = options;
     const { app_root } = options;
 
-    return path.join(app_root, 'reports', app_name, pathNameFromUrl(url));
+    return path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
 }
 
 function reportDirNow(reportDir) {
@@ -38,11 +38,11 @@ function reportDirNow(reportDir) {
 }
 
 function newestDir(options) {
-    const { app_name } = options;
+    const { report_folder_name } = options;
     const { url } = options;
     const { app_root } = options;
 
-    const dir = path.join(app_root, 'reports', app_name, pathNameFromUrl(url));
+    const dir = path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
 
     const folders = fs.readdirSync(dir);
 
@@ -55,7 +55,6 @@ const executeScript = async (options) => {
     const { url } = options;
     return new Promise(async (resolve, reject) => {
         try {
-
             const { script } = options;
             const { reportDir } = options;
             const { params } = options;

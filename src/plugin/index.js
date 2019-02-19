@@ -5,7 +5,7 @@ const plugin_getData = async (item) => {
         try {
             var options = {
                 url_settings : item.url_settings,
-                reportDir : reportDir ({ url: item.url_settings.url, app_name: item.app_name, app_root: item.app_root })
+                reportDir : reportDir ({ url: item.url_settings.url, report_folder_name: item.report_folder_name, app_root: item.app_root })
             }
 
             var data = await item.getData(options);

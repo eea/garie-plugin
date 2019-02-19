@@ -60,10 +60,11 @@ app.use('/reports', express.static('reports'), serveIndex('reports', { icons: tr
 
 const main = async () => {
   garie_plugin.init({
-    database:'<my_garie_plugin>',
     getData:myGetData,
     getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
-    app_name:'<my_garie_plugin>',
+    db_name:'<my_garie_plugin_database>',
+    plugin_name:'<my_garie_plugin>',
+    report_folder_name:'<my_garie_plugin_report_folder>',
     app_root: path.join(__dirname, '..'),
     config:config
   });

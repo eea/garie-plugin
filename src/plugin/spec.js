@@ -14,7 +14,8 @@ const mock_getData = async (options) => {
 
 
 const mock_item = {
-    app_name : "test_plugin",
+    plugin_name : "test_plugin",
+    report_folder_name : "test_plugin_results",
     url_settings : {
         url: "http://www.test.com"
     },

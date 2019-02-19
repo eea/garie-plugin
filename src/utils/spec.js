@@ -16,13 +16,14 @@ describe('utils', () => {
         expect(pathname).toEqual('www.test.com');
 
         var options = {
-            app_name : 'test_plugin',
+            plugin_name : 'test_plugin',
+            report_folder_name: 'test_plugin_reports',
             url : 'http://www.test.com',
             app_root : '/tmp/test_reports',
             fileName : 'test.txt'
         };
         var reportDir = utils.helpers.reportDir(options);
-        expect(reportDir).toEqual('/tmp/test_reports/reports/test_plugin/www.test.com');
+        expect(reportDir).toEqual('/tmp/test_reports/reports/test_plugin_reports/www.test.com');
 
         fs.ensureDirSync(reportDir);
 
