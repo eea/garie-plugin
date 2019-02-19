@@ -19,7 +19,7 @@ The available functions are:
 - reportDir(options)	- takes an object as parameter and returns the folder name where the reports should be stored
 	```		
 		{
-			app_name: string,
+			report_folder_name: string,
 			url: string,
 			app_root: string
 		}
@@ -28,7 +28,7 @@ The available functions are:
 - newestDir(options) - takes an object as parameter and returns the newest folder
 	```		
 		{
-			app_name: string,
+			report_folder_name: string,
 			url: string,
 			app_root: string
 		}
