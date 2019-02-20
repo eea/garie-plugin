@@ -106,9 +106,9 @@ In both cases, **nodejs** or **shell script**, the myGetData function should ret
 
 While developing the plugin you can use the docker-compose-dev.yml.
 It will:
-	- build locally the image for the plugin;
-	- mount your source code and local config.json inside your container, so it can be tested without rebuilding and restarting the image;
-	- instead of starting the app, and crashing if something wrong, just starts the container, with a 'bash -c "tail -f /dev/null"' command, what will keep the container alive.
+- build locally the image for the plugin;
+- mount your source code and local config.json inside your container, so it can be tested without rebuilding and restarting the image;
+- instead of starting the app, and crashing if something wrong, just starts the container, with a 'bash -c "tail -f /dev/null"' command, what will keep the container alive.
 
 In a terminal (#1) you can start the container with:
 ```
