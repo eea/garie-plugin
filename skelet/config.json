@@ -3,7 +3,7 @@
         <my_plugin>:{
             "cron": "0 */4 * * *"
         }
-    }
+    },
   "urls": [
     {
       "url": "https://www.eea.europa.eu/",
