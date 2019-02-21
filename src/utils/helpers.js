@@ -67,7 +67,7 @@ const executeScript = async (options) => {
 
             child.on('exit', async (code) => {
                 console.log("Exit code from script:", code);
-                if (code === 0){
+                if ((code !== null) && (code !== 124)){
                     const data = await callback({url: url, reportDir: reportDir});
                     resolve(data);
                 }
