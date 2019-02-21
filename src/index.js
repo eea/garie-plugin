@@ -67,18 +67,23 @@ const init = async(options) => {
         items.push(tmp_item)
     }
     try {
-        if (settings.config.cron) {
-            return new CronJob(
-                settings.config.cron,
-                async () => {
-                    getDataForAllUrls(items);
-                },
-                null,
-                true,
-                'Europe/London',
-                null,
-                true
-            );
+        try {
+            const cron_config = settings.config.plugins[settings.plugin_name].cron
+            if (cron_config) {
+                return new CronJob(
+                    cron_config,
+                    async () => {
+                        getDataForAllUrls(items);
+                    },
+                    null,
+                    true,
+                    'Europe/London',
+                    null,
+                    true
+                );
+            }
+        } catch (err){
+            console.log("Cron is not configured for plugin", err);
         }
     } catch (err) {
         console.log(err);
