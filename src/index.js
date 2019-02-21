@@ -49,9 +49,14 @@ const init = async(options) => {
 
     var items = [];
     for (var i = 0; i <= settings.config.urls.length-1; i++){
-        const url = settings.config.urls[i];
+        const url_settings = {};
+        url_settings.url = settings.config.urls[i].url;
+        const { plugins } = settings.config.urls[i];
+        if ((plugins !== undefined) && (plugins[options.plugin_name] !== undefined)){
+            extend(url_settings, plugins[options.plugin_name]);
+        }
         var tmp_item = {
-            url_settings: url,
+            url_settings: url_settings,
             influx_obj: influx_obj,
             getData: settings.getData,
             getMeasurement: settings.getMeasurement,
