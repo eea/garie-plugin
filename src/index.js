@@ -20,8 +20,11 @@ async function getDataForItem(item){
 }
 
 const getDataForAllUrls = async(options) => {
+    if (options.prepDataForAllUrls !== undefined){
+        await options.prepDataForAllUrls();
+    }
     try{
-        await mapAsync(options, item => getDataForItem(item), { concurrency: numCPUs });
+        await mapAsync(options.items, item => getDataForItem(item), { concurrency: numCPUs });
         console.log('Finished processed all CRON urls.');
     } catch (err){
         console.log(err);
@@ -66,6 +69,10 @@ const init = async(options) => {
         }
         items.push(tmp_item)
     }
+
+    var getAllDataOptions = {};
+    getAllDataOptions.items = items;
+    getAllDataOptions.prepDataForAllUrls = settings.prepDataForAllUrls;
     try {
         try {
             const cron_config = settings.config.plugins[settings.plugin_name].cron
@@ -73,7 +80,7 @@ const init = async(options) => {
                 return new CronJob(
                     cron_config,
                     async () => {
-                        getDataForAllUrls(items);
+                        getDataForAllUrls(getAllDataOptions);
                     },
                     null,
                     true,

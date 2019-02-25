@@ -66,7 +66,9 @@ const main = async () => {
     plugin_name:'<my_garie_plugin>',
     report_folder_name:'<my_garie_plugin_report_folder>',
     app_root: path.join(__dirname, '..'),
-    config:config
+    config:config,
+    prepDataForAllUrls: getMonitorsPrep /*optional, if you want a method to be executed once, before calling getData for each item */
+
   });
 }
 
