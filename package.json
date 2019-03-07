@@ -29,8 +29,8 @@
         "winston": "^3.0.0",
         "lodash.isempty": "4.4.0",
         "extend": "3.0.2",
+        "sleep-promise": "8.0.1",
         "dateformat": "*"
-
     },
     "devDependencies": {
         "codecov": "^3.0.0",
