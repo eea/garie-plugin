@@ -59,22 +59,35 @@ const app = express();
 app.use('/reports', express.static('reports'), serveIndex('reports', { icons: true }));
 
 const main = async () => {
-  garie_plugin.init({
-    getData:myGetData,
-    getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
-    db_name:'<my_garie_plugin_database>',
-    plugin_name:'<my_garie_plugin>',
-    report_folder_name:'<my_garie_plugin_report_folder>',
-    app_root: path.join(__dirname, '..'),
-    config:config,
-    prepDataForAllUrls: getMonitorsPrep /*optional, if you want a method to be executed once, before calling getData for each item */
-
+  return new Promise(async (resolve, reject) => {
+    try{
+      garie_plugin.init({
+        getData:myGetData,
+        getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
+        db_name:'<my_garie_plugin_database>',
+        plugin_name:'<my_garie_plugin>',
+        report_folder_name:'<my_garie_plugin_report_folder>',
+        app_root: path.join(__dirname, '..'),
+        config:config,
+        prepDataForAllUrls: getMonitorsPrep /*optional, if you want a method to be executed once, before calling getData for each item */
+      });
+    }
+    catch(err){
+      reject(err);
+    }
   });
+
 }
 
 if (process.env.ENV !== 'test') {
-  app.listen(3000, async () => {
+  const server = app.listen(3000, async () => {
     console.log('Application listening on port 3000');
-    await main();
+    try{
+      await main();
+    }
+    catch(err){
+      console.log(err);
+      server.close();
+    }
   });
 }
