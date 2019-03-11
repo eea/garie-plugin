@@ -61,7 +61,7 @@ app.use('/reports', express.static('reports'), serveIndex('reports', { icons: tr
 const main = async () => {
   return new Promise(async (resolve, reject) => {
     try{
-      garie_plugin.init({
+      await garie_plugin.init({
         getData:myGetData,
         getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
         db_name:'<my_garie_plugin_database>',
