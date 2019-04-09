@@ -33,8 +33,23 @@ const saveData = async (influxdb, url, measurement) => {
     }
 }
 
+const markSuccess = async (influxdb, url) => {
+    try {
+        const measurement = [ { measurement: 'success',
+            tags: { url: url },
+            fields: { success: true } } ];
+        const result = await influxdb.writePoints(measurement);
+        console.log(`Successfully marked ${influxdb.options.database} data for ${url} as success`);
+        return result;
+    } catch (err) {
+        console.log(`Failed to save data for ${url}`, err);
+        return Promise.reject(`Failed to mark data into influxdb for ${url}`);
+    }
+}
+
 module.exports = {
     init,
     create_db,
-    saveData
+    saveData,
+    markSuccess
 }

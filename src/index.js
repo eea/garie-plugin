@@ -13,22 +13,82 @@ async function getDataForItem(item){
     const { url } = item.url_settings;
     try{
         const data = await plugin_getData(item);
-        const measurement = await plugin_getMeasurement(item, data);
-        await influx.saveData(item.influx_obj, url, measurement);
+        if (data !== null){
+            const measurement = await plugin_getMeasurement(item, data);
+            await influx.saveData(item.influx_obj, url, measurement);
+        }
+        await influx.markSuccess(item.influx_obj, url);
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
     }
 }
 
+Array.prototype.diff = function(a) {
+    return this.filter(function(i) {return a.indexOf(i) < 0;});
+};
+
+async function getFailedUrls(settings){
+    const { influx } = settings;
+    const { retryTimeRange } = settings;
+    const { urls } = settings;
+    return new Promise(async (resolve, reject) => {
+        try{
+            console.log('Trying to get failed tasks');
+
+            const finishedTasks = await influx.query("select * from success where time > now() - " + retryTimeRange + "m");
+
+            const finishedUrls = finishedTasks.groupRows[0].rows.map(url => url.url);
+
+
+            const failedUrls = urls.diff(finishedUrls);
+            resolve (failedUrls);
+        }
+        catch (err){
+            reject(err);
+        }
+    });
+}
+
 const getDataForAllUrls = async(options) => {
-    if (options.prepDataForAllUrls !== undefined){
-        await options.prepDataForAllUrls();
-    }
-    try{
-        await mapAsync(options.items, item => getDataForItem(item), { concurrency: numCPUs });
-        console.log('Finished processed all CRON urls.');
-    } catch (err){
-        console.log(err);
+    var items_to_process = options.items;
+
+    const all_urls = items_to_process.map(url => url.url_settings.url);
+
+    while (true){
+        if (options.prepDataForAllUrls !== undefined){
+            await options.prepDataForAllUrls();
+        }
+        try{
+            await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
+            console.log('Finished processed all CRON urls.');
+        } catch (err){
+            console.log(err);
+        }
+
+        if (options.retryTimes === 0){
+            console.log('No more retries');
+            break;
+        }
+        else {
+            console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
+            await sleep(options.retryAfter * 60000);
+            var options_failed = {
+                influx: options.influx,
+                retryTimeRange: options.retryTimeRange,
+                urls: all_urls
+            };
+            var failedUrls = await getFailedUrls(options_failed);
+            if (failedUrls.length === 0){
+                console.log('All tasks were executed successfully');
+                break;
+            }
+            else {
+                console.log('There are ' + failedUrls.length +' failed tasks:');
+                console.log(failedUrls);
+                items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
+                continue;
+            }
+        }
     }
 }
 
@@ -96,10 +156,31 @@ const init = async(options) => {
             var getAllDataOptions = {};
             getAllDataOptions.items = items;
             getAllDataOptions.prepDataForAllUrls = settings.prepDataForAllUrls;
+            getAllDataOptions.influx = influx_obj;
+
+            const retry = settings.config.plugins[settings.plugin_name].retry;
+
+            getAllDataOptions.retryTimes = 3
+            getAllDataOptions.retryAfter = 30;
+            getAllDataOptions.retryTimeRange = 360;
+
+            if (retry !== undefined){
+                if (retry.times !== undefined){
+                    getAllDataOptions.retryTimes = retry.times;
+                }
+                if (retry.after !== undefined){
+                    getAllDataOptions.retryAfter = retry.after;
+                }
+                if (retry.timeRange !== undefined){
+                    getAllDataOptions.retryTimeRange = retry.timeRange;
+                }
+            }
+
+
             try {
                 const cron_config = settings.config.plugins[settings.plugin_name].cron
                 if (cron_config) {
-                    return new CronJob(
+                    new CronJob(
                         cron_config,
                         async () => {
                             getDataForAllUrls(getAllDataOptions);
@@ -111,8 +192,10 @@ const init = async(options) => {
                         true
                     );
                 }
+                resolve(null);
             } catch (err){
                 console.log("Cron is not configured for plugin", err);
+                reject("Cron is not configured for plugin");
             }
         } catch (err){
             console.log(err);

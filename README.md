@@ -101,7 +101,34 @@ In both cases, **nodejs** or **shell script**, the myGetData function should ret
 		}
 	]
 	```
+## Retry functionality for failed tasks
+We have an automatic functionality, what will retry the failed tasks.
+The configuration is done separately for each plugin in the config.json:
+```
+"plugins":{
+	"my_plugin":{
+		"cron":...,
+		"retry":{
+			"after":<number>,
+			"times":<number>,
+			"timeRange":<number>
+		}
+	}
+}
+```
+| Property | Type                | Description                                                                          |
+| -------- | ------------------- | ------------------------------------------------------------------------------------ |
+| `plugins.my_plugin.retry.after`   | `number` (optional, default 30) | Minutes before we retry to execute the tasks |
+| `plugins.my_plugin.retry.times`   | `number` (optional, default 3) | How many time to retry to execute the failed tasks |
+| `plugins.my_plugin.retry.timeRange`   | `number` (optional, default 360) | Period in minutes to be checked in influx, to know if a task failed |
 
+When implementing your plugin, it's important to make a difference between failed tasks, and cases when intentionally nothing is written in influx.
+If the task fails, the method should **reject** with an error.
+If the task did not fail, but you don't want to write data in influx, it's important to **resolve** the method, like this:
+```
+resolve(null);
+```
+This way, the url will be marked, and we don't retry it.
 ## Hints for developing the plugin:
 
 While developing the plugin you can use the docker-compose-dev.yml.
