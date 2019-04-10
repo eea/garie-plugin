@@ -36,11 +36,15 @@ async function getFailedUrls(settings){
             console.log('Trying to get failed tasks');
 
             const finishedTasks = await influx.query("select * from success where time > now() - " + retryTimeRange + "m");
+            var failedUrls;
+            try{
+                const finishedUrls = finishedTasks.groupRows[0].rows.map(url => url.url);
+                failedUrls = urls.diff(finishedUrls);
+            }
+            catch(err) {
+                failedUrls = urls;
+            }
 
-            const finishedUrls = finishedTasks.groupRows[0].rows.map(url => url.url);
-
-
-            const failedUrls = urls.diff(finishedUrls);
             resolve (failedUrls);
         }
         catch (err){
