@@ -68,8 +68,13 @@ const executeScript = async (options) => {
             child.on('exit', async (code) => {
                 console.log("Exit code from script:", code);
                 if ((code !== null) && (code !== 124)){
-                    const data = await callback({url: url, reportDir: reportDir});
-                    resolve(data);
+                    try{
+                        const data = await callback({url: url, reportDir: reportDir});
+                        resolve(data);
+                    }
+                    catch(err){
+                        reject(`Failed to get file`);
+                    }
                 }
                 else {
                     console.log(`Timeout while trying to get data for ${url}`);
@@ -91,8 +96,8 @@ const executeScript = async (options) => {
 }
 
 const getNewestFile = (options) => {
+    const { url } = options;
     try {
-        const { url } = options;
         const { fileName } = options;
         const { reportDir } = options;
 
@@ -106,7 +111,6 @@ const getNewestFile = (options) => {
     } catch (err) {
         console.log(err);
         const message = `Failed to get file for ${url}`;
-        logger.warn(message);
         return Promise.reject(message);
     }
 };
