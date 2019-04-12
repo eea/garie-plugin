@@ -59,13 +59,18 @@ const getDataForAllUrls = async(options) => {
     const all_urls = items_to_process.map(url => url.url_settings.url);
 
     while (true){
-        if (options.prepDataForAllUrls !== undefined){
-            await options.prepDataForAllUrls();
-        }
         try{
-            await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
-            console.log('Finished processed all CRON urls.');
-        } catch (err){
+            if (options.prepDataForAllUrls !== undefined){
+                await options.prepDataForAllUrls();
+            }
+            try{
+                await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
+                console.log('Finished processed all CRON urls.');
+            } catch (err){
+                console.log(err);
+            }
+        }
+        catch (err){
             console.log(err);
         }
 
