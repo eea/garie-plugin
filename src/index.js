@@ -74,6 +74,7 @@ const getDataForAllUrls = async(options) => {
             break;
         }
         else {
+            options.retryTimes--;
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
             await sleep(options.retryAfter * 60000);
             var options_failed = {
