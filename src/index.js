@@ -57,7 +57,7 @@ const getDataForAllUrls = async(options) => {
     var items_to_process = options.items;
 
     const all_urls = items_to_process.map(url => url.url_settings.url);
-
+    var retries = 0;
     while (true){
         try{
             if (options.prepDataForAllUrls !== undefined){
@@ -66,6 +66,9 @@ const getDataForAllUrls = async(options) => {
             try{
                 await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
                 console.log('Finished processed all CRON urls.');
+                if (retries > 0){
+                    console.log("Retry: " + retries + "/" + options.retryTimes);
+                }
             } catch (err){
                 console.log(err);
             }
@@ -74,12 +77,12 @@ const getDataForAllUrls = async(options) => {
             console.log(err);
         }
 
-        if (options.retryTimes === 0){
+        if (options.retryTimes === retries){
             console.log('No more retries');
             break;
         }
         else {
-            options.retryTimes--;
+            retries++;
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
             await sleep(options.retryAfter * 60000);
             var options_failed = {
@@ -90,11 +93,13 @@ const getDataForAllUrls = async(options) => {
             var failedUrls = await getFailedUrls(options_failed);
             if (failedUrls.length === 0){
                 console.log('All tasks were executed successfully');
+                console.log("Retry: " + retries + "/" + options.retryTimes);
                 break;
             }
             else {
                 console.log('There are ' + failedUrls.length +' failed tasks:');
                 console.log(failedUrls);
+                console.log("Retry: " + retries + "/" + options.retryTimes);
                 items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
                 continue;
             }
