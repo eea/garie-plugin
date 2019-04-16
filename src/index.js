@@ -58,25 +58,28 @@ const getDataForAllUrls = async(options) => {
 
     const all_urls = items_to_process.map(url => url.url_settings.url);
     var retries = 0;
+    var skip_retry;
     while (true){
-        try{
-            if (options.prepDataForAllUrls !== undefined){
-                await options.prepDataForAllUrls();
-            }
+        if (!skip_retry){
             try{
-                await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
-                console.log('Finished processed all CRON urls.');
-                if (retries > 0){
-                    console.log("Retry: " + retries + "/" + options.retryTimes);
+                if (options.prepDataForAllUrls !== undefined){
+                    await options.prepDataForAllUrls();
                 }
-            } catch (err){
+                try{
+                    await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
+                    console.log('Finished processed all CRON urls.');
+                    if (retries > 0){
+                        console.log("Retry: " + retries + "/" + options.retryTimes);
+                    }
+                } catch (err){
+                    console.log(err);
+                }
+            }
+            catch (err){
                 console.log(err);
             }
         }
-        catch (err){
-            console.log(err);
-        }
-
+        skip_retry = false;
         if (options.retryTimes === retries){
             console.log('No more retries');
             break;
@@ -90,10 +93,18 @@ const getDataForAllUrls = async(options) => {
                 retryTimeRange: options.retryTimeRange,
                 urls: all_urls
             };
-            var failedUrls = await getFailedUrls(options_failed);
-            if (failedUrls.length === 0){
-                console.log('All tasks were executed successfully');
+            try{
+                var failedUrls = await getFailedUrls(options_failed);
+            }
+            catch(err){
                 console.log("Retry: " + retries + "/" + options.retryTimes);
+                console.log("Failed retrieving failed urls");
+                skip_retry = true;
+                continue;
+            }
+            if (failedUrls.length === 0){
+                console.log("Retry: " + retries + "/" + options.retryTimes);
+                console.log('All tasks were executed successfully');
                 break;
             }
             else {
