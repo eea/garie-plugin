@@ -13,11 +13,18 @@ async function getDataForItem(item){
     const { url } = item.url_settings;
     try{
         const data = await plugin_getData(item);
+        var isSuccess = true;
         if (data !== null){
+            if (data.partial_success == true){
+                isSuccess = false;
+                delete(data.partial_success)
+            }
             const measurement = await plugin_getMeasurement(item, data);
             await influx.saveData(item.influx_obj, url, measurement);
         }
-        await influx.markSuccess(item.influx_obj, url);
+        if (isSuccess){
+            await influx.markSuccess(item.influx_obj, url);
+        }
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
     }

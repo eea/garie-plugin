@@ -129,6 +129,13 @@ If the task did not fail, but you don't want to write data in influx, it's impor
 resolve(null);
 ```
 This way, the url will be marked, and we don't retry it.
+
+In case the task has more tests, and one of them fails, you have the possibility to write the successful result to influx, but also mark the task as failed.
+For this, in your plugin, you have to **resolve** the result, but add an extra attribute, called **partial_success** to the result
+```
+    result['partial_success'] = true;
+```
+
 ## Hints for developing the plugin:
 
 While developing the plugin you can use the docker-compose-dev.yml.
