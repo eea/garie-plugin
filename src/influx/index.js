@@ -1,6 +1,9 @@
 const Influx = require('influx');
+let database = null;
 
 function init(db_name){
+    database = db_name
+
     return new Influx.InfluxDB({
         host: process.env.HOST || 'localhost',
         database: db_name
@@ -10,11 +13,14 @@ function init(db_name){
 const create_db = async (influxdb) => {
     try {
         const names = await influxdb.getDatabaseNames();
-        if (names.indexOf(influxdb.options.database) === -1) {
-            console.log(`InfluxDB: ${influxdb.options.database} database does not exist. Creating database`);
-            return influxdb.createDatabase(influxdb.options.database);
+        influxdb.getDatabaseNames().then(response => {
+            console.log("Response = ", response)
+        })
+        if (names.indexOf(database) === -1) {
+            console.log(`InfluxDB: ${database} database does not exist. Creating database`);
+            return influxdb.createDatabase(database);
         }
-        console.log('InfluxDB', `${influxdb.options.database} database already exists. Skipping creation.`);
+        console.log('InfluxDB', `${database} database already exists. Skipping creation.`);
         return Promise.resolve();
     } catch (err) {
         console.log(err);
@@ -25,7 +31,7 @@ const create_db = async (influxdb) => {
 const saveData = async (influxdb, url, measurement) => {
     try {
         const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully saved ${influxdb.options.database} data for ${url}`);
+        console.log(`Successfully saved ${database} data for ${url}`);
         return result;
     } catch (err) {
         console.log(`Failed to save data for ${url}`, err);
@@ -39,7 +45,7 @@ const markSuccess = async (influxdb, url) => {
             tags: { url: url },
             fields: { success: true } } ];
         const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully marked ${influxdb.options.database} data for ${url} as success`);
+        console.log(`Successfully marked ${database} data for ${url} as success`);
         return result;
     } catch (err) {
         console.log(`Failed to save data for ${url}`, err);

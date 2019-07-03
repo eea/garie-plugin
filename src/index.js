@@ -3,10 +3,10 @@ const extend = require('extend')
 const influx = require('./influx')
 const { plugin_getData } = require('./plugin')
 const { plugin_getMeasurement } = require('./plugin')
-const numCPUs = require('os').cpus().length;
 const mapAsync = require('./utils/map-async');
 const utils = require('./utils');
 const sleep = require('sleep-promise');
+let numCPUs = require('os').cpus().length;
 
 async function getDataForItem(item){
 
@@ -144,7 +144,10 @@ const init = async(options) => {
             }
             extend(settings, options);
             const influx_obj = influx.init(settings.db_name)
-
+            //  Limit usage of cpus by 60% of min
+            numCPUs = Math.ceil(
+                0.6 * Math.min(numCPUs, settings.config.plugins[settings.plugin_name].maxCpus)
+            )
             var retries = 0;
             var shouldInterrupt = false;
             while(true){
