@@ -58,12 +58,13 @@ const executeScript = async (options) => {
             const { script } = options;
             const { reportDir } = options;
             const { params } = options;
+            const { env } = options;
             const { callback } = options;
             const { timeout = 0 } = options;
 
             const command = [ script, url, reportDir ].concat(params);
 
-            const child = child_process.spawn('bash', command);
+            const child = child_process.spawn('bash', command, { env: env });
 
             child.on('exit', async (code) => {
                 console.log("Exit code from script:", code);
