@@ -219,6 +219,8 @@ const init = async(options) => {
                     new CronJob(
                         cron_config,
                         async () => {
+                            console.log('Threads used: ' + numCPUs)
+                            console.log('CPUs usage percentage by each thread: ' + settings.config.plugins[settings.plugin_name].cpuUsage * 100 + '%')
                             getDataForAllUrls(getAllDataOptions);
                         },
                         null,
