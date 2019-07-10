@@ -221,9 +221,6 @@ const init = async(options) => {
                                 numCPUs = Math.min(numCPUs, maxCpus)
                             }
                             console.log('Threads used: ' + numCPUs)
-                            if (settings.config.plugins[settings.plugin_name].cpuUsage) {
-                                console.log('CPUs usage percentage by each thread: ' + settings.config.plugins[settings.plugin_name].cpuUsage * 100 + '%')
-                            }
                             getDataForAllUrls(getAllDataOptions);
                         },
                         null,

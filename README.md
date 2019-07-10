@@ -160,13 +160,11 @@ npm start
 ## CPUs usage
 
 Limiting CPU cores is done by setting the value of `maxCpus` in the config.json.
-Limiting CPU usage of `maxCpus` for each Thread is done by setting `cpuUsage`, in percentage, in the config.json.
 ```
 "plugins":{
 	"my_plugin":{
 		"cron": ...,
 		"maxCpus": 3,
-		"cpuUsage" 0.5
 	}
 }
 ```
