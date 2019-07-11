@@ -156,3 +156,15 @@ On your host you can modify the source code and on terminal #2 you can manually 
 ```
 npm start
 ```
+
+## CPUs usage
+
+Limiting CPU cores is done by setting the value of `maxCpus` in the config.json.
+```
+"plugins":{
+	"my_plugin":{
+		"cron": ...,
+		"maxCpus": 3,
+	}
+}
+```

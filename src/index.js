@@ -144,10 +144,6 @@ const init = async(options) => {
             }
             extend(settings, options);
             const influx_obj = influx.init(settings.db_name)
-            //  Limit usage of cpus by 60% of min
-            numCPUs = Math.ceil(
-                0.6 * Math.min(numCPUs, settings.config.plugins[settings.plugin_name].maxCpus)
-            )
             var retries = 0;
             var shouldInterrupt = false;
             while(true){
@@ -219,6 +215,12 @@ const init = async(options) => {
                     new CronJob(
                         cron_config,
                         async () => {
+                            if (settings.config.plugins[settings.plugin_name].maxCpus) {
+                                //  Set number of CPUs
+                                const maxCpus = settings.config.plugins[settings.plugin_name].maxCpus
+                                numCPUs = Math.min(numCPUs, maxCpus)
+                            }
+                            console.log('Threads used: ' + numCPUs)
                             getDataForAllUrls(getAllDataOptions);
                         },
                         null,
