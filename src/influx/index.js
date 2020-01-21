@@ -29,6 +29,7 @@ const create_db = async (influxdb) => {
 
 const saveData = async (influxdb, url, measurement) => {
     try {
+//TODO: check why writePoints fails when too many plugins try to write simultaneously to influx
         const result = await influxdb.writePoints(measurement);
         console.log(`Successfully saved ${influxdb.config.database} data for ${url}`);
         return result;
