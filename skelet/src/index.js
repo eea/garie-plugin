@@ -1,9 +1,6 @@
 const garie_plugin = require('garie-plugin')
 const path = require('path');
 const config = require('../config');
-const express = require('express');
-const bodyParser = require('body-parser');
-const serveIndex = require('serve-index');
 
 /* optional, only if you should store more values on a single row */
 const myGetMeasurement = async (item, data) => {
