@@ -55,39 +55,29 @@ const myGetData = async (item) => {
 console.log("Start");
 
 
-const app = express();
-app.use('/reports', express.static('reports'), serveIndex('reports', { icons: true }));
-
 const main = async () => {
-  return new Promise(async (resolve, reject) => {
-    try{
-      await garie_plugin.init({
-        getData:myGetData,
-        getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
-        db_name:'<my_garie_plugin_database>',
-        plugin_name:'<my_garie_plugin>',
-        report_folder_name:'<my_garie_plugin_report_folder>',
-        app_root: path.join(__dirname, '..'),
-        config:config,
-        prepDataForAllUrls: getMonitorsPrep /*optional, if you want a method to be executed once, before calling getData for each item */
-      });
-    }
-    catch(err){
-      reject(err);
-    }
-  });
-
+  try{
+    const { app } = await garie_plugin.init({
+      getData:myGetData,
+      getMeasurement: myGetMeasurement, /* optional, only if you should store more values on a single row, remove if not needed */
+      db_name:'<my_garie_plugin_database>',
+      plugin_name:'<my_garie_plugin>',
+      report_folder_name:'<my_garie_plugin_report_folder>',
+      app_root: path.join(__dirname, '..'),
+      config:config,
+      prepDataForAllUrls: getMonitorsPrep, /*optional, if you want a method to be executed once, before calling getData for each item */
+      scanOnDemand: false /* optional; set to "true" to enable scanning on demand */
+    });
+    app.listen(3000, () => {
+      console.log('Application listening on port 3000');
+    });
+  }
+  catch(err){
+    console.log(err);
+    reject(err);
+  }
 }
 
 if (process.env.ENV !== 'test') {
-  const server = app.listen(3000, async () => {
-    console.log('Application listening on port 3000');
-    try{
-      await main();
-    }
-    catch(err){
-      console.log(err);
-      server.close();
-    }
-  });
+  main();
 }
