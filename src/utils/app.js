@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
+const extend = require('extend')
 const { reportDir } = require('./helpers');
 
 const createApp = (settings) => {
@@ -14,9 +15,16 @@ const createApp = (settings) => {
 
     const launchScanOnDemand = async (url, scan) => {
       try {
+        const url_settings = { url };
+
+        const url_config = settings.config.urls.find((c) => c.url === url)
+        if (url_config && url_config.plugins) {
+          extend(url_settings, url_config.plugins[settings.plugin_name])
+        }
+
         console.log(`Launching scan on demand for ${url}`);
         const data = await settings.getData({
-          url_settings: { url },
+          url_settings,
           reportDir: reportDir({
             url,
             report_folder_name: `on-demand/${settings.report_folder_name}`,
