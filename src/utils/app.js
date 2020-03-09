@@ -23,18 +23,22 @@ const createApp = (settings, influx_obj) => {
           extend(url_settings, url_config.plugins[settings.plugin_name])
         }
 
-        console.log(`Launching scan on demand for ${url}`);
         const report_folder_name = `on-demand/${settings.report_folder_name}`;
-        const { app_root, getData } = settings;
-        item = {
+        const { app_root, getData, getMeasurement } = settings;
+        const item = {
           url_settings,
           report_folder_name,
           app_root,
           influx_obj,
           getData,
+          getMeasurement,
         };
+        console.log(`Launching scan on demand for ${url}`);
         const data = await plugin.plugin_getData(item);
-        const measurement = await plugin.plugin_getMeasurement(item, data);
+        let measurement = [];
+        if (data !== null) {
+          measurement = await plugin.plugin_getMeasurement(item, data);
+        }
         console.log(`Scan on demand finished for ${url}`);
         scan.result = measurement;
         scan.state = 'success';
