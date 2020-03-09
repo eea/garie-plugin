@@ -18,7 +18,7 @@ const createApp = (settings, influx_obj) => {
       try {
         const url_settings = { url };
 
-        const url_config = settings.config.urls.find((c) => c.url === url)
+        const url_config = settings.config.urls.find((c) => c.url === url || c.url === `${url}/`)
         if (url_config && url_config.plugins) {
           extend(url_settings, url_config.plugins[settings.plugin_name])
         }
