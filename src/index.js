@@ -231,7 +231,7 @@ const init = async(options) => {
                         true
                     );
                 }
-                const app = createApp(settings);
+                const app = createApp(settings, influx_obj);
                 resolve({ app });
             } catch (err){
                 console.log("Cron is not configured for plugin", err);

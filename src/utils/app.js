@@ -3,8 +3,9 @@ const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
 const extend = require('extend')
 const { reportDir } = require('./helpers');
+const plugin = require('../plugin');
 
-const createApp = (settings) => {
+const createApp = (settings, influx_obj) => {
   const app = express();
   app.use(bodyParser.json());
 
@@ -23,16 +24,19 @@ const createApp = (settings) => {
         }
 
         console.log(`Launching scan on demand for ${url}`);
-        const data = await settings.getData({
+        const report_folder_name = `on-demand/${settings.report_folder_name}`;
+        const { app_root, getData } = settings;
+        item = {
           url_settings,
-          reportDir: reportDir({
-            url,
-            report_folder_name: `on-demand/${settings.report_folder_name}`,
-            app_root: settings.app_root,
-          }),
-        });
+          report_folder_name,
+          app_root,
+          influx_obj,
+          getData,
+        };
+        const data = await plugin.plugin_getData(item);
+        const measurement = await plugin.plugin_getMeasurement(item, data);
         console.log(`Scan on demand finished for ${url}`);
-        scan.result = data;
+        scan.result = measurement;
         scan.state = 'success';
       } catch(err) {
         console.log(`Scan on demand failed for ${url}`);
