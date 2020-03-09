@@ -5,6 +5,7 @@ const { plugin_getData } = require('./plugin')
 const { plugin_getMeasurement } = require('./plugin')
 const mapAsync = require('./utils/map-async');
 const utils = require('./utils');
+const { createApp } = require('./utils/app');
 const sleep = require('sleep-promise');
 let numCPUs = require('os').cpus().length;
 
@@ -230,7 +231,8 @@ const init = async(options) => {
                         true
                     );
                 }
-                resolve(null);
+                const app = createApp(settings);
+                resolve({ app });
             } catch (err){
                 console.log("Cron is not configured for plugin", err);
                 reject("Cron is not configured for plugin");
