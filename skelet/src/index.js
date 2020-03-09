@@ -63,7 +63,7 @@ const main = async () => {
       app_root: path.join(__dirname, '..'),
       config:config,
       prepDataForAllUrls: getMonitorsPrep, /*optional, if you want a method to be executed once, before calling getData for each item */
-      scanOnDemand: false /* optional; set to "true" to enable scanning on demand */
+      onDemand: false /* optional; set to "true" to enable scanning on demand */
     });
     app.listen(3000, () => {
       console.log('Application listening on port 3000');
