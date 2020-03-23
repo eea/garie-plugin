@@ -5,6 +5,8 @@ const extend = require('extend')
 const { reportDir } = require('./helpers');
 const plugin = require('../plugin');
 
+const JOB_LIFETIME = 24 * 3600;
+
 const createApp = (settings, influx_obj) => {
   const app = express();
   app.use(bodyParser.json());
@@ -49,7 +51,17 @@ const createApp = (settings, influx_obj) => {
       }
     }
 
+    const removeOldScans = () => {
+      const now = new Date().getTime();
+      for (const id of Object.keys(scanQueue)) {
+        if (now - id > JOB_LIFETIME * 1000) {
+          delete scanQueue[id];
+        }
+      }
+    }
+
     const scanOnDemand = (url) => {
+      removeOldScans();
       const scan = {
         id: new Date().getTime(),
         state: 'inprogress',
