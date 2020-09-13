@@ -2,7 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
 const extend = require('extend')
-const { reportDir } = require('./helpers');
+const { copy } = require('fs-extra');
+const { reportDir, newestDir, reportDirNow } = require('./helpers');
 const plugin = require('../plugin');
 
 const JOB_LIFETIME = 24 * 3600;
@@ -21,6 +22,7 @@ const createApp = (settings, influx_obj) => {
         const url_settings = { url };
 
         const url_config = settings.config.urls.find((c) => c.url === url || c.url === `${url}/`)
+        // url_config being truthy means it has found the URL in the config
         if (url_config && url_config.plugins) {
           extend(url_settings, url_config.plugins[settings.plugin_name])
         }
@@ -37,13 +39,42 @@ const createApp = (settings, influx_obj) => {
         };
         console.log(`Launching scan on demand for ${url}`);
         const data = await plugin.plugin_getData(item);
+        var isSuccess = true;
         let measurement = [];
         if (data !== null) {
+          if (data.partial_success == true) {
+            isSuccess = false;
+            delete(data.partial_success)
+          }
           measurement = await plugin.plugin_getMeasurement(item, data);
         }
         console.log(`Scan on demand finished for ${url}`);
         scan.result = measurement;
         scan.state = 'success';
+        // If URL was in plugin's config, write data to influx and to report dir.
+        if (url_config) {
+          console.log(`Saving results for ${url} for `)
+          await influx.saveData(influx_obj, url, measurement);
+          if (isSuccess){
+            await influx.markSuccess(influx_obj, url);
+          }
+          // After plugin-specific files have been written to ondemand report dir, copy them to actual reports dir
+          const ondemand_options = {
+            report_folder_name,
+            url,
+            app_root,
+          };
+          ondemand_dir = newestDir(ondemand_options);
+          const reports_options = {
+            'report_folder_name': settings.report_folder_name,
+            'url': url,
+            'app_root': app_root,
+          };
+          reports_dir = reportDir(reports_options);
+          reports_dir_now = reportDirNow(reports_dir);
+          copy(ondemand_dir, reports_dir);
+        }
+
       } catch(err) {
         console.log(`Scan on demand failed for ${url}`);
         console.error(err);
