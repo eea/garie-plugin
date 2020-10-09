@@ -5,6 +5,7 @@ const extend = require('extend')
 const { copy } = require('fs-extra');
 const { reportDir, newestDir, reportDirNow } = require('./helpers');
 const plugin = require('../plugin');
+const influx = require('../influx')
 
 const JOB_LIFETIME = 24 * 3600;
 
@@ -53,7 +54,7 @@ const createApp = (settings, influx_obj) => {
         scan.state = 'success';
         // If URL was in plugin's config, write data to influx and to report dir.
         if (url_config) {
-          console.log(`Saving results for ${url} for `)
+          console.log(`Saving ondemand results for ${url} as permanent.`)
           await influx.saveData(influx_obj, url, measurement);
           if (isSuccess){
             await influx.markSuccess(influx_obj, url);
