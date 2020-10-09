@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
 const extend = require('extend')
-const { copy } = require('fs-extra');
+const { copySync } = require('fs-extra');
 const { reportDir, newestDir, reportDirNow } = require('./helpers');
 const plugin = require('../plugin');
 const influx = require('../influx');
@@ -73,7 +73,13 @@ const createApp = (settings, influx_obj) => {
           };
           reports_dir = reportDir(reports_options);
           reports_dir_now = reportDirNow(reports_dir);
-          copy(ondemand_dir, reports_dir);
+          console.log(`Copying from ${ondemand_dir} to ${reports_dir_now}.`);
+          try {
+            copySync(ondemand_dir, reports_dir_now);
+            console.log('Successfully copied reports to permanent dir.');
+          } catch (err) {
+            console.error(err);
+          }
         }
 
       } catch(err) {
