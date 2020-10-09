@@ -5,7 +5,7 @@ const extend = require('extend')
 const { copy } = require('fs-extra');
 const { reportDir, newestDir, reportDirNow } = require('./helpers');
 const plugin = require('../plugin');
-const influx = require('../influx')
+const influx = require('../influx');
 
 const JOB_LIFETIME = 24 * 3600;
 
