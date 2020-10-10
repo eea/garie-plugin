@@ -51,6 +51,20 @@ function newestDir(options) {
     return newestFolder;
 }
 
+function newestDirFull(options) {
+    const { report_folder_name } = options;
+    const { url } = options;
+    const { app_root } = options;
+
+    const dir = path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
+
+    const folders = fs.readdirSync(dir);
+
+    const newestFolder = folders[folders.length - 1];
+
+    return path.join(dir, newestFolder);
+}
+
 const executeScript = async (options) => {
     const { url } = options;
     return new Promise(async (resolve, reject) => {
@@ -120,6 +134,7 @@ module.exports = {
     reportDir,
     reportDirNow,
     newestDir,
+    newestDirFull,
     executeScript,
     getNewestFile,
     pathNameFromUrl

@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
 const extend = require('extend')
 const { copySync } = require('fs-extra');
-const { reportDir, newestDir, reportDirNow } = require('./helpers');
+const { reportDir, newestDirFull, reportDirNow } = require('./helpers');
 const plugin = require('../plugin');
 const influx = require('../influx');
 
@@ -65,7 +65,7 @@ const createApp = (settings, influx_obj) => {
             url,
             app_root,
           };
-          ondemand_dir = newestDir(ondemand_options);
+          ondemand_dir = newestDirFull(ondemand_options);
           const reports_options = {
             'report_folder_name': settings.report_folder_name,
             'url': url,
