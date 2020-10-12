@@ -1,9 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 const serveIndex = require('serve-index');
-const extend = require('extend')
+const extend = require('extend');
 const { copySync } = require('fs-extra');
-const { reportDir, newestDirFull, reportDirNow } = require('./helpers');
+const { reportDir, newestDirFull, newestDir } = require('./helpers');
 const plugin = require('../plugin');
 const influx = require('../influx');
 
@@ -65,6 +66,7 @@ const createApp = (settings, influx_obj) => {
             url,
             app_root,
           };
+          ondemand_newest_dir = newestDir(ondemand_options);
           ondemand_dir = newestDirFull(ondemand_options);
           const reports_options = {
             'report_folder_name': settings.report_folder_name,
@@ -72,7 +74,7 @@ const createApp = (settings, influx_obj) => {
             'app_root': app_root,
           };
           reports_dir = reportDir(reports_options);
-          reports_dir_now = reportDirNow(reports_dir);
+          reports_dir_now = path.join(reports_dir, ondemand_newest_dir);
           console.log(`Copying from ${ondemand_dir} to ${reports_dir_now}.`);
           try {
             copySync(ondemand_dir, reports_dir_now);
