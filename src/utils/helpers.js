@@ -37,7 +37,7 @@ function reportDirNow(reportDir) {
     return path.join(reportDir, dateFormat(date, "isoUtcDateTime"));
 }
 
-function newestDir(options) {
+function newestDirBase(options) {
     const { report_folder_name } = options;
     const { url } = options;
     const { app_root } = options;
@@ -50,19 +50,20 @@ function newestDir(options) {
     folders = folders.filter(folder => !isNaN(Date.parse(folder)))
     const newestFolder = folders[folders.length - 1];
 
+    return { dir, newestFolder };
+}
+
+function newestDir(options) {
+    dirObject = newestDirBase(options);
+    const { newestFolder } = dirObject;
+
     return newestFolder;
 }
 
 function newestDirFull(options) {
-    const { report_folder_name } = options;
-    const { url } = options;
-    const { app_root } = options;
-
-    const dir = path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
-
-    const folders = fs.readdirSync(dir);
-
-    const newestFolder = folders[folders.length - 1];
+    dirObject = newestDirBase(options);
+    const { dir } = dirObject;
+    const { newestFolder } = dirObject;
 
     return path.join(dir, newestFolder);
 }
