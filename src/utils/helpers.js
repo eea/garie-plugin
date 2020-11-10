@@ -106,7 +106,7 @@ const getNewestFile = (options) => {
         const folders = fs.readdirSync(reportDir);
 
         // Filter out accidental non-date folders before finding newest
-        folders = folders.filter(folder => !isNaN(Date.parse(folder)))
+        folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0,10))));
         const newestFolder = folders[folders.length - 1];
 
         const newestFile = fs.readFileSync(path.join(reportDir, newestFolder, fileName));
