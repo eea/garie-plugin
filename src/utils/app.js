@@ -1,9 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const serveIndex = require('serve-index');
-const extend = require('extend')
+const extend = require('extend');
 const { reportDir } = require('./helpers');
 const plugin = require('../plugin');
+const influx = require('../influx');
+const sleep = require('sleep-promise');
 
 const JOB_LIFETIME = 24 * 3600;
 
@@ -77,6 +79,34 @@ const createApp = (settings, influx_obj) => {
 
     app.get('/scan/:id', (req, res) => {
       res.send(scanQueue[req.params.id]);
+    });
+
+    app.get('/health', async (req, res) => {
+      try {
+        var retries = 0;
+        while(true){
+          try{
+            console.log('Trying to connect to influx');
+            await influx.create_db(influx_obj);
+            break;
+          }
+          catch (err){
+            retries++;
+              if (retries < 3){
+                console.log('Failed to connect to influx, retry #', retries);
+                await sleep(1000);
+              }
+              else {
+                throw(err);
+              }
+          }
+        }
+        res.sendStatus(200);
+      } catch(err) {
+        console.log('Healthcheck: failed connecting to influx');
+        console.error(err);
+        res.sendStatus(400);
+      }
     });
   }
 
