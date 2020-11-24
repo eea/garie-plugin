@@ -9,9 +9,11 @@ const { createApp } = require('./utils/app');
 const sleep = require('sleep-promise');
 let numCPUs = require('os').cpus().length;
 
-async function getDataForItem(item){
+async function getDataForItem(item, retries){
 
     const { url } = item.url_settings;
+
+    await influx.markStatus(item.influx_obj, url, 0, Date.now(), retries);
     try{
         const data = await plugin_getData(item);
         var isSuccess = true;
@@ -25,6 +27,10 @@ async function getDataForItem(item){
         }
         if (isSuccess){
             await influx.markSuccess(item.influx_obj, url);
+            await influx.markStatus(item.influx_obj, url, 1, Date.now(), retries);
+
+        } else {
+            await influx.markStatus(item.influx_obj, url, 2, Date.now(), retries);
         }
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
@@ -62,9 +68,11 @@ async function getFailedUrls(settings){
 }
 
 const getDataForAllUrls = async(options) => {
-    var items_to_process = options.items;
-
+    await influx.markStatusLogs(options.influx, "START", Date.now());
+   
+    var items_to_process = options.items;    
     const all_urls = items_to_process.map(url => url.url_settings.url);
+    
     var retries = 0;
     var skip_retry;
     while (true){
@@ -74,7 +82,7 @@ const getDataForAllUrls = async(options) => {
                     await options.prepDataForAllUrls();
                 }
                 try{
-                    await mapAsync(items_to_process, item => getDataForItem(item), { concurrency: numCPUs });
+                    await mapAsync(items_to_process, item => getDataForItem(item, retries), { concurrency: numCPUs });
                     console.log('Finished processed all CRON urls.');
                     if (retries > 0){
                         console.log("Retry: " + retries + "/" + options.retryTimes);
@@ -90,10 +98,14 @@ const getDataForAllUrls = async(options) => {
         skip_retry = false;
         if (options.retryTimes === retries){
             console.log('No more retries');
+            await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
             break;
         }
         else {
             retries++;
+            if (retries <= 1) {
+                await influx.markStatusLogs(options.influx, "WAITING", Date.now());
+            }
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
             await sleep(options.retryAfter * 60000);
             var options_failed = {
@@ -105,17 +117,21 @@ const getDataForAllUrls = async(options) => {
                 var failedUrls = await getFailedUrls(options_failed);
             }
             catch(err){
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log("Failed retrieving failed urls");
                 skip_retry = true;
                 continue;
             }
             if (failedUrls.length === 0){
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log('All tasks were executed successfully');
+                await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
                 break;
             }
             else {
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
                 console.log('There are ' + failedUrls.length +' failed tasks:');
                 console.log(failedUrls);
                 console.log("Retry: " + retries + "/" + options.retryTimes);
@@ -222,6 +238,7 @@ const init = async(options) => {
                                 numCPUs = Math.min(numCPUs, maxCpus)
                             }
                             console.log('Threads used: ' + numCPUs)
+
                             getDataForAllUrls(getAllDataOptions);
                         },
                         null,
