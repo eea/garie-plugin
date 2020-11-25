@@ -1,6 +1,6 @@
 {
     "name": "garie-plugin",
-    "version": "0.0.17",
+    "version": "0.0.20",
     "description": "Garie plugin package",
     "license": "MIT",
     "main": "src/index.js",
