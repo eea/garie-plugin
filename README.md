@@ -33,6 +33,7 @@ The available functions are:
 			app_root: string
 		}
 	```
+- newestDirFull(options) - same as newestDir, but returns full path of the newest folder
 - getNewestFile(options) - takes an object as parameter and returns the newest report file. Not the name of the file, but the contents of it
 	```		
 		{
