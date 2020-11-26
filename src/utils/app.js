@@ -5,10 +5,11 @@ const extend = require('extend')
 const { reportDir } = require('./helpers');
 const plugin = require('../plugin');
 const nunjucks = require('nunjucks');
-const sleep = require('sleep-promise');
 
 
 const JOB_LIFETIME = 24 * 3600;
+const TIME_IN_SECONDS = 1000000000;
+const TIME_IN_NANOS = 1000000;
 
 const createApp = (settings, influx_obj) => {
   const app = express();
@@ -16,19 +17,17 @@ const createApp = (settings, influx_obj) => {
 
   app.use('/reports', express.static('reports'), serveIndex('reports', { icons: true }));
   
-  const nunjucksEnv = nunjucks.configure(`${__dirname}/views`, {
+  nunjucks.configure(`${__dirname}/views`, {
     autoescape: true,
     express: app,
     watch: true,
   });
-  
-  nunjucksEnv.addGlobal('settings', settings)
 
-  async function getCurrentChecks(waitingStateTimestamp, startTimestamp) {
-    const runningChecks = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time<=${waitingStateTimestamp} and time>=${startTimestamp}`);
-    const failedChecks = await influx_obj.query(`select * from status where state=\'2\' and time<=${waitingStateTimestamp} and time>=${startTimestamp}`);
+  async function getCurrentChecks(waitingTimestamp, startTimestamp) {
+    const runningChecks = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
+    const failedChecks = await influx_obj.query(`select * from status where state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
 
-    const duration = (waitingStateTimestamp - startTimestamp) / 1000000000;
+    const duration = (waitingTimestamp - startTimestamp) / TIME_IN_SECONDS;
     
     const currentChecks = {
       runningChecks: runningChecks.length,
@@ -40,20 +39,18 @@ const createApp = (settings, influx_obj) => {
     return currentChecks;
   }
 
-
-  async function getCurrentRetries(waitingStateTimestamp, statusLogsRows) {
-
+  async function getCurrentRetries(waitingTimestamp, statusLogsRows) {
     const retries = [];
     if (statusLogsRows.length === 0) {
       return {retries};
     }
 
-    const runningRetries = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time > ${waitingStateTimestamp}`);
+    const runningRetries = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time > ${waitingTimestamp}`);
     
     for (let i = 0; i < statusLogsRows.length - 1; i++) {
       if (statusLogsRows[i].step.includes("RETRY")) {
         retries.push({
-          duration: (statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / 1000000000,
+          duration: (statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS,
           success: 0,
           fail : 0
         });
@@ -61,7 +58,7 @@ const createApp = (settings, influx_obj) => {
     }
       if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
         retries.push({
-          duration: (Date.now() * 1000000 - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / 1000000000,
+          duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
           success: 0,
           fail : 0
         })
@@ -83,12 +80,15 @@ const createApp = (settings, influx_obj) => {
     return currentRetries;
   }
 
-	app.get('/status', async (req, res) => {
-
+  app.get('/status', async (req, res) => {
     const defaultMessage = "Plugin has not started yet."
     const nrUrls = settings.config.urls.length;
 
-    let tablesToShow = {first: false, retries: false, finish: false};
+    let tablesToShow = {
+      first: false,
+      retries: false,
+      finish: false
+    };
 
     const statusLogsQuery = await influx_obj.query('select last(*) from "status-logs" group by step order by time asc');
     if (statusLogsQuery.length === 0) {
@@ -98,13 +98,13 @@ const createApp = (settings, influx_obj) => {
       return a.time > b.time;
     });
 
-    let idx = statusLogsQuery.findIndex(elem => elem.step === "START");
-    const statusLogsRows= statusLogsQuery.slice(idx);
+    const idx = statusLogsQuery.findIndex(elem => elem.step === "START");
+    const statusLogsRows = statusLogsQuery.slice(idx);
     const startTimestamp = statusLogsRows[0].time.getNanoTime();
     const startTime = statusLogsRows[0].time.toISOString();
 
-    let waitingTimestamp = Date.now() * 1000000;
-    if (statusLogsRows.length >= 1) {
+    let waitingTimestamp = Date.now() * TIME_IN_NANOS;
+    if (statusLogsRows.length >= 2) {
       waitingTimestamp = statusLogsRows[1].time.getNanoTime();
     }
 
@@ -126,7 +126,7 @@ const createApp = (settings, influx_obj) => {
     } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
      
       const finishTime = statusLogsRows[statusLogsRows.length - 1].time.getNanoTime();
-      const totalRunningTime = (finishTime - startTimestamp) / 1000000000;
+      const totalRunningTime = (finishTime - startTimestamp) / TIME_IN_SECONDS;
       const successful = await influx_obj.query(`select * from success where time>=${startTimestamp}`);      
       const countSuccess = successful.length;
 
@@ -138,7 +138,6 @@ const createApp = (settings, influx_obj) => {
         startTime, totalRunningTime, countSuccess, tablesToShow });
      
     }
-
     return res.render('status.html', { defaultMessage });
   });
   

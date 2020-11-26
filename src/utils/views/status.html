@@ -8,13 +8,15 @@
 {% block content %}
 <body>
     <br>
-    {{ defaultMessage }}
+    <h1> {{ defaultMessage }} </h1>
     <br>
+    
     <div class="table-responsive">
         <table
-            class="table table-striped table-sm"
+            class="table table-striped"
             id="data-table"
-            data-toggle="table">
+            data-toggle="table"
+            style='font-family:"Courier New"; font-size:large'>
             <thead class="thead-dark">
                 <tr>
                     <th scope="col" data-field="blank">
@@ -50,32 +52,32 @@
             </tbody>
             {% endif %}
             {% if tablesToShow.retries %}
-            {% for row in currentlyRunningRetriesTable.retries %}
-            <tbody>
-                <tr>
-                    <th rowspan="4" scope = "rowgroup">
-                        Retries Currently Running - Retry nr. {{ loop.index }}
-                    </th>
-                    <td>
-                        {% if loop.index0 == 0 %}
-                            {{ row.success + row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
-                        {% else %}
-                            {{ row.success + row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if loop.index0 == 0 %}
-                            {{ row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
-                        {% else %}
-                            {{ row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        Run for: {{ row.duration }} s
-                    </td>
-                </tr>
-            </tbody>
-            {% endfor %}
+                {% for row in currentlyRunningRetriesTable.retries %}
+                    <tbody>
+                        <tr>
+                            <th rowspan="4" scope = "rowgroup">
+                                Retries Currently Running - Retry nr. {{ loop.index }}
+                            </th>
+                            <td>
+                                {% if loop.index0 == 0 %}
+                                    {{ row.success + row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
+                                {% else %}
+                                    {{ row.success + row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loop.index0 == 0 %}
+                                    {{ row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
+                                {% else %}
+                                    {{ row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                Run for: {{ row.duration }} s
+                            </td>
+                        </tr>
+                    </tbody>
+                {% endfor %}
             {% endif %}
         </table>
     </div>
@@ -84,9 +86,10 @@
     {% if tablesToShow.finish %}
     <div class="table-responsive">
         <table
-            class="table table-striped table-sm"
+            class="table table-striped"
             id="data-table"
-            data-toggle="table">
+            data-toggle="table"
+            style='font-family:"Courier New"; font-size:large'>
             <thead class="thead-dark">
                 <tr>
                     <th scope="col" data-field="blank">

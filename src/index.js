@@ -69,7 +69,6 @@ async function getFailedUrls(settings){
 
 const getDataForAllUrls = async(options) => {
     await influx.markStatusLogs(options.influx, "START", Date.now());
-   
     var items_to_process = options.items;    
     const all_urls = items_to_process.map(url => url.url_settings.url);
     

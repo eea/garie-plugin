@@ -53,16 +53,18 @@ const markSuccess = async (influxdb, url) => {
     }
 }
 
-//state = {0, 1, 2}
-// 0 -> in process
-// 1 -> finished successfully
-// 2 -> failed
+/*
+   state = {0, 1, 2}
+   0 -> in process
+   1 -> finished successfully
+   2 -> failed
+*/
 const markStatus = async (influxdb, url, state, timestamp, retry) => {
     try {
         const measurement = [ {
             measurement: "status",
             tags: { url: url, state: state },
-            fields: { date: timestamp, retry: retry }           
+            fields: { retry: retry }           
         }];
 
         const result = await influxdb.writePoints(measurement);
@@ -74,7 +76,7 @@ const markStatus = async (influxdb, url, state, timestamp, retry) => {
     }
 }
 
-//steps = {START, WAITING, RETRY 1, RETRY 2, ..., FINISHED}
+// steps = {START, WAITING, RETRY 1, RETRY 2, ..., FINISHED}
 const markStatusLogs = async (influxdb, step, timestamp) => {
     try {
         const measurement = [ {
