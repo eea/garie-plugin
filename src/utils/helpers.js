@@ -44,7 +44,7 @@ function newestDirBase(options) {
 
     const dir = path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
 
-    const folders = fs.readdirSync(dir);
+    let folders = fs.readdirSync(dir);
 
     // Filter out accidental non-date folders before finding newest
     folders = folders.filter(folder => !isNaN(Date.parse(folder)))
