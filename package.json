@@ -1,6 +1,6 @@
 {
     "name": "garie-plugin",
-    "version": "0.0.17",
+    "version": "0.0.21",
     "description": "Garie plugin package",
     "license": "MIT",
     "main": "src/index.js",
@@ -21,16 +21,17 @@
     "dependencies": {
         "body-parser": "^1.18.3",
         "cron": "^1.4.1",
+        "dateformat": "*",
         "express": "^4.16.3",
+        "extend": "3.0.2",
         "flat": "^4.1.0",
         "fs-extra": "^7.0.0",
         "influx": "5.0.7",
-        "serve-index": "^1.9.1",
-        "winston": "^3.0.0",
         "lodash.isempty": "4.4.0",
-        "extend": "3.0.2",
+        "recursive-copy": "^2.0.11",
+        "serve-index": "^1.9.1",
         "sleep-promise": "8.0.1",
-        "dateformat": "*"
+        "winston": "^3.0.0"
     },
     "devDependencies": {
         "codecov": "^3.0.0",

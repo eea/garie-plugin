@@ -37,20 +37,35 @@ function reportDirNow(reportDir) {
     return path.join(reportDir, dateFormat(date, "isoUtcDateTime"));
 }
 
-function newestDir(options) {
+function newestDirBase(options) {
     const { report_folder_name } = options;
     const { url } = options;
     const { app_root } = options;
 
     const dir = path.join(app_root, 'reports', report_folder_name, pathNameFromUrl(url));
 
-    const folders = fs.readdirSync(dir);
+    let folders = fs.readdirSync(dir);
 
     // Filter out accidental non-date folders before finding newest
     folders = folders.filter(folder => !isNaN(Date.parse(folder)))
     const newestFolder = folders[folders.length - 1];
 
+    return { dir, newestFolder };
+}
+
+function newestDir(options) {
+    dirObject = newestDirBase(options);
+    const { newestFolder } = dirObject;
+
     return newestFolder;
+}
+
+function newestDirFull(options) {
+    dirObject = newestDirBase(options);
+    const { dir } = dirObject;
+    const { newestFolder } = dirObject;
+
+    return path.join(dir, newestFolder);
 }
 
 const executeScript = async (options) => {
@@ -103,7 +118,7 @@ const getNewestFile = (options) => {
         const { fileName } = options;
         const { reportDir } = options;
 
-        const folders = fs.readdirSync(reportDir);
+        let folders = fs.readdirSync(reportDir);
 
         // Filter out accidental non-date folders before finding newest
         folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0,10))));
@@ -124,6 +139,7 @@ module.exports = {
     reportDir,
     reportDirNow,
     newestDir,
+    newestDirFull,
     executeScript,
     getNewestFile,
     pathNameFromUrl
