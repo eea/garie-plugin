@@ -12,6 +12,16 @@ function init(db_name){
     return influxdb
 }
 
+const list_db = async (influxdb) => {
+    try {
+        const names = await influxdb.getDatabaseNames();
+        return Promise.resolve();
+    } catch (err) {
+        console.log(err);
+        return Promise.reject('Failed to connect to influx')
+    }
+}
+
 const create_db = async (influxdb) => {
     try {
         const names = await influxdb.getDatabaseNames();
@@ -55,6 +65,7 @@ const markSuccess = async (influxdb, url) => {
 
 module.exports = {
     init,
+    list_db,
     create_db,
     saveData,
     markSuccess

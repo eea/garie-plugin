@@ -126,7 +126,7 @@ const createApp = (settings, influx_obj) => {
         while(true){
           try{
             console.log('Trying to connect to influx');
-            await influx.create_db(influx_obj);
+            await influx.list_db(influx_obj);
             break;
           }
           catch (err){
