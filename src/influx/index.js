@@ -63,10 +63,53 @@ const markSuccess = async (influxdb, url) => {
     }
 }
 
+/*
+   state = {0, 1, 2}
+   0 -> in process
+   1 -> finished successfully
+   2 -> failed
+*/
+const markStatus = async (influxdb, url, state, timestamp, retry) => {
+    try {
+        const measurement = [ {
+            measurement: "status",
+            tags: { url: url, state: state },
+            fields: { retry: retry }           
+        }];
+
+        const result = await influxdb.writePoints(measurement);
+        console.log(`Successfully added the state ${state} for ${url}`);
+        return result;
+    } catch (err) {
+        console.log(`Failed to add the state for ${url}`);
+        return Promise.reject(`Failed to add data to status.`)
+    }
+}
+
+// steps = {START, WAITING, RETRY 1, RETRY 2, ..., FINISHED}
+const markStatusLogs = async (influxdb, step, timestamp) => {
+    try {
+        const measurement = [ {
+            measurement: "status-logs",
+            tags: {step: step },
+            fields: { date: timestamp }
+        }];
+
+        const result = await influxdb.writePoints(measurement);
+        console.log(`Successfully added step ${step}`);
+        return result;
+    } catch (err) {
+        console.log(`Failed to add step ${step}`);
+        return Promise.reject(`Failed to add step ${step}.`)
+    }
+}
+
 module.exports = {
     init,
     list_db,
     create_db,
     saveData,
-    markSuccess
+    markSuccess,
+    markStatus,
+    markStatusLogs
 }

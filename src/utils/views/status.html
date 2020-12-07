@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+{% endblock %}
+<script>
+
+</script>
+{% block content %}
+<body>
+    <br>
+    <h1> {{ defaultMessage }} </h1>
+    <br>
+    
+    <div class="table-responsive">
+        <table
+            class="table table-striped"
+            id="data-table"
+            data-toggle="table"
+            style='font-family:"Courier New"; font-size:large'>
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col" data-field="blank">
+
+                    </th>
+                    <th scope="col" data-field="urls-checked">
+                        URL's checked
+                    </th>
+                    <th scope="col" data-field="failed-checks">
+                        Failures
+                    </th>
+                    <th colspan="3" scope="colgroup">
+                        Time
+                    </th>
+                </tr>
+            </thead>
+            {% if tablesToShow.first %}
+            <tbody>
+                <tr>
+                    <th rowspan="3" scope = "rowgroup">
+                        Checks Currently Running
+                    </th>
+                    <td>
+                        {{ currentlyRunningChecksTable.runningChecks }} / {{ nrUrls }}
+                    </td>
+                    <td>
+                        {{ currentlyRunningChecksTable.failedChecks }} / {{ nrUrls }}
+                    </td>
+                    <td>
+                        Run for {{ currentlyRunningChecksTable.duration }} s
+                    </td>
+                </tr>
+            </tbody>
+            {% endif %}
+            {% if tablesToShow.retries %}
+                {% for row in currentlyRunningRetriesTable.retries %}
+                    <tbody>
+                        <tr>
+                            <th rowspan="4" scope = "rowgroup">
+                                Retries Currently Running - Retry nr. {{ loop.index }}
+                            </th>
+                            <td>
+                                {% if loop.index0 == 0 %}
+                                    {{ row.success + row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
+                                {% else %}
+                                    {{ row.success + row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loop.index0 == 0 %}
+                                    {{ row.fail }} / {{ currentlyRunningChecksTable.failedChecks }}
+                                {% else %}
+                                    {{ row.fail }} / {{ currentlyRunningRetriesTable.retries[loop.index0 - 1].fail }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                Run for: {{ row.duration }} s
+                            </td>
+                        </tr>
+                    </tbody>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+    <br>
+    <br>
+    {% if tablesToShow.finish %}
+    <div class="table-responsive">
+        <table
+            class="table table-striped"
+            id="data-table"
+            data-toggle="table"
+            style='font-family:"Courier New"; font-size:large'>
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col" data-field="blank">
+
+                    </th>
+                    <th scope="col" data-field="active-checks">
+                        Start Time
+                    </th>
+                    <th scope="col" data-field="failed-checks">
+                        Total Running Time
+                    </th>
+                    <th scope="col" data-field="failed-checks">
+                        Successful Checks / Total
+                    </th>
+                    <th colspan="4" scope="colgroup">
+                        Errors
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th rowspan="4" scope = "rowgroup">
+                        Last Performed
+                    </th>
+                    <td>
+                        {{ startTime }}
+                    </td>
+                    <td>
+                        {{ totalRunningTime }}
+                    </td>
+                    <td>
+                       {{ countSuccess }} / {{ nrUrls }}
+                    </td>
+                    <td>
+                        {{ nrUrls - countSuccess }} / {{ nrUrls }}
+                    </td>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    
+</body>
+{% endblock %}
+
