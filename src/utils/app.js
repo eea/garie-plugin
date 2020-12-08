@@ -26,7 +26,7 @@ const createApp = (settings, influx_obj) => {
   });
 
   app.get('/status', async (req, res) => {
-    return makeStatusTables(res, influx_obj, settings.config.urls.length);
+    return makeStatusTables(res, influx_obj);
   });
   
 

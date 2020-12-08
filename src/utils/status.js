@@ -70,7 +70,7 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
   return currentRetries;
 }
 
-async function makeStatusTables( res, influx, nrUrls, database ) {
+async function makeStatusTables( res, influx, database ) {
   const defaultMessage = "Plugin has not started yet.";
 
   let tablesToShow = {
@@ -101,6 +101,9 @@ async function makeStatusTables( res, influx, nrUrls, database ) {
   if (statusLogsRows.length >= 2) {
     waitingTimestamp = statusLogsRows[1].time.getNanoTime();
   }
+
+  const urlsQuery = await influx.query(`select count(*) from status where time <= ${waitingTimestamp} and time >= ${startTimestamp} and state = '0'`, { database })
+  const nrUrls = urlsQuery[0].count_retry;
 
   const currentlyRunningChecksTable = await getCurrentChecks(influx, waitingTimestamp, startTimestamp, database);
   const currentlyRunningRetriesTable = await getCurrentRetries(influx, waitingTimestamp, statusLogsRows.slice(2), database);
