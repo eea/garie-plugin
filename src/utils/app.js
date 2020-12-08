@@ -9,10 +9,9 @@ const plugin = require('../plugin');
 const nunjucks = require('nunjucks');
 const influx = require('../influx');
 const sleep = require('sleep-promise');
+const { makeStatusTables } = require('./status');
 
 const JOB_LIFETIME = 24 * 3600;
-const TIME_IN_SECONDS = 1000000000;
-const TIME_IN_NANOS = 1000000;
 
 const createApp = (settings, influx_obj) => {
   const app = express();
@@ -26,122 +25,8 @@ const createApp = (settings, influx_obj) => {
     watch: true,
   });
 
-  async function getCurrentChecks(waitingTimestamp, startTimestamp) {
-    const runningChecks = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
-    const failedChecks = await influx_obj.query(`select * from status where state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
-
-    const duration = (waitingTimestamp - startTimestamp) / TIME_IN_SECONDS;
-    
-    const currentChecks = {
-      runningChecks: runningChecks.length,
-      failedChecks: failedChecks.length,
-      startTime: startTimestamp,
-      duration: duration
-    }
-
-    return currentChecks;
-  }
-
-  async function getCurrentRetries(waitingTimestamp, statusLogsRows) {
-    const retries = [];
-    if (statusLogsRows.length === 0) {
-      return {retries};
-    }
-
-    const runningRetries = await influx_obj.query(`select * from status where state=\'1\' or state=\'2\' and time > ${waitingTimestamp}`);
-    
-    for (let i = 0; i < statusLogsRows.length - 1; i++) {
-      if (statusLogsRows[i].step.includes("RETRY")) {
-        retries.push({
-          duration: (statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS,
-          success: 0,
-          fail : 0
-        });
-      }
-    }
-      if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
-        retries.push({
-          duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
-          success: 0,
-          fail : 0
-        })
-      }
-    
-    for (let row of runningRetries) {
-      if (row.state == 1) {
-        retries[row.retry - 1].success++;
-        
-      } else if(row.state == 2) {
-        retries[row.retry - 1].fail++;
-      }
-    }
-
-    const currentRetries = {
-      retries
-    };
-
-    return currentRetries;
-  }
-
   app.get('/status', async (req, res) => {
-    const defaultMessage = "Plugin has not started yet."
-    const nrUrls = settings.config.urls.length;
-
-    let tablesToShow = {
-      first: false,
-      retries: false,
-      finish: false
-    };
-
-    const statusLogsQuery = await influx_obj.query('select last(*) from "status-logs" group by step order by time asc');
-    if (statusLogsQuery.length === 0) {
-      return res.render('status.html', { defaultMessage });
-    }
-    statusLogsQuery.sort((a, b) => {
-      return a.time > b.time;
-    });
-
-    const idx = statusLogsQuery.findIndex(elem => elem.step === "START");
-    const statusLogsRows = statusLogsQuery.slice(idx);
-    const startTimestamp = statusLogsRows[0].time.getNanoTime();
-    const startTime = statusLogsRows[0].time.toISOString();
-
-    let waitingTimestamp = Date.now() * TIME_IN_NANOS;
-    if (statusLogsRows.length >= 2) {
-      waitingTimestamp = statusLogsRows[1].time.getNanoTime();
-    }
-
-    const currentlyRunningChecksTable = await getCurrentChecks(waitingTimestamp, startTimestamp);
-    const currentlyRunningRetriesTable = await getCurrentRetries(waitingTimestamp, statusLogsRows.slice(2));
-
-    if (statusLogsRows[statusLogsRows.length - 1].step === "START" ||
-        statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
-
-      tablesToShow.first = true;
-      return res.render('status.html', { nrUrls, currentlyRunningChecksTable, tablesToShow });
-    
-    } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
-    
-      tablesToShow.first = true;
-      tablesToShow.retries = true;
-      return res.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow });
-
-    } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
-     
-      const finishTime = statusLogsRows[statusLogsRows.length - 1].time.getNanoTime();
-      const totalRunningTime = (finishTime - startTimestamp) / TIME_IN_SECONDS;
-      const successful = await influx_obj.query(`select * from success where time>=${startTimestamp}`);      
-      const countSuccess = successful.length;
-
-
-      tablesToShow.first = true;
-      tablesToShow.retries = true;
-      tablesToShow.finish = true;
-      return res.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable,
-        startTime, totalRunningTime, countSuccess, tablesToShow });
-     
-    }
-    return res.render('status.html', { defaultMessage });
+    return makeStatusTables(res, influx_obj, settings.config.urls.length);
   });
   
 
