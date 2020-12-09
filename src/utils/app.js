@@ -6,7 +6,6 @@ const extend = require('extend');
 const { copySync } = require('fs-extra');
 const { reportDir, newestDirFull, newestDir } = require('./helpers');
 const plugin = require('../plugin');
-const nunjucks = require('nunjucks');
 const influx = require('../influx');
 const sleep = require('sleep-promise');
 const { makeStatusTables } = require('./status');
@@ -18,12 +17,8 @@ const createApp = (settings, influx_obj) => {
   app.use(bodyParser.json());
 
   app.use('/reports', express.static('reports'), serveIndex('reports', { icons: true }));
-  
-  nunjucks.configure(`${__dirname}/views`, {
-    autoescape: true,
-    express: app,
-    watch: true,
-  });
+
+ 
 
   app.get('/status', async (req, res) => {
     return makeStatusTables(res, influx_obj);

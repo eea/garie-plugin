@@ -1,6 +1,11 @@
-
 const TIME_IN_SECONDS = 1000000000;
 const TIME_IN_NANOS = 1000000;
+const nunjucks = require('nunjucks');
+
+const env = nunjucks.configure(`${__dirname}/views`, {
+  autoescape: true,
+  watch: true,
+})
 
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {
     let runningChecks = [];
@@ -70,7 +75,7 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
   return currentRetries;
 }
 
-async function makeStatusTables( res, influx, database ) {
+async function makeStatusTables( res, influx, database) {
   const defaultMessage = "Plugin has not started yet.";
 
   let tablesToShow = {
@@ -86,7 +91,7 @@ async function makeStatusTables( res, influx, database ) {
   }
 
   if (statusLogsQuery.length === 0) {
-    return res.render('status.html', { defaultMessage });
+    return res.send(env.render('status.html', { defaultMessage }));
   }
   statusLogsQuery.sort((a, b) => {
     return a.time.getNanoTime() - b.time.getNanoTime();
@@ -112,13 +117,13 @@ async function makeStatusTables( res, influx, database ) {
       statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
 
     tablesToShow.first = true;
-    return res.render('status.html', { nrUrls, currentlyRunningChecksTable, tablesToShow });
+    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, tablesToShow }));
       
   } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
   
     tablesToShow.first = true;
     tablesToShow.retries = true;
-    return res.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow });
+    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow }));
 
   } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
     
@@ -137,10 +142,10 @@ async function makeStatusTables( res, influx, database ) {
     tablesToShow.first = true;
     tablesToShow.retries = true;
     tablesToShow.finish = true;
-    return res.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable,
-      startTime, totalRunningTime, countSuccess, tablesToShow });
+    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable,
+      startTime, totalRunningTime, countSuccess, tablesToShow }));
   }
-  return res.render('status.html', { defaultMessage });
+  return res.send(env.render('status.html', { defaultMessage }));
 }
 
 module.exports = {
