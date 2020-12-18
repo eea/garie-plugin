@@ -6,7 +6,7 @@ const child_process = require('child_process');
 const dateFormat = require('dateformat');
 const crypto = require('crypto');
 
-function pathNameFromUrl(url) {
+function pathNameFromUrl(url, onDemand=false) {
   const parsedUrl = urlParser.parse(url),
     pathSegments = parsedUrl.pathname.split('/');
 
@@ -19,6 +19,9 @@ function pathNameFromUrl(url) {
         .digest('hex')
         .substring(0, 8);
     pathSegments.push('query-' + hash);
+  }
+  if (onDemand === true) {
+      pathSegments.unshift('on-demand');
   }
   return pathSegments.filter(Boolean).join('-');
 }
