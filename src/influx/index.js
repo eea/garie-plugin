@@ -2,7 +2,7 @@ const Influx = require('influx');
 
 function init(db_name){
 
-    let influx = new Influx.InfluxDB({
+    let influxdb = new Influx.InfluxDB({
         host: process.env.INFLUX_HOST || 'localhost',
         port: process.env.INFLUX_PORT || 8086,
         database: db_name,
