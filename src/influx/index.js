@@ -1,9 +1,13 @@
 const Influx = require('influx');
 
 function init(db_name){
-    let influxdb = new Influx.InfluxDB({
-        host: process.env.HOST || 'localhost',
-        database: db_name
+
+    let influx = new Influx.InfluxDB({
+        host: process.env.INFLUX_HOST || 'localhost',
+        port: process.env.INFLUX_PORT || 8086,
+        database: db_name,
+        username: process.env.INFLUX_USERNAME || '',
+        password: process.env.INFLUX_PASSWORD || '',
     });
 
     influxdb.config = {}
