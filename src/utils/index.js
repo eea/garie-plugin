@@ -1,7 +1,8 @@
 helpers = require('./helpers')
-const { makeStatusTables } = require('./status')
+const { makeStatusTables, getSummaryStatus } = require('./status')
  
 module.exports = {
     helpers,
-    makeStatusTables
+    makeStatusTables,
+    getSummaryStatus
 }

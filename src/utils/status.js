@@ -148,6 +148,22 @@ async function makeStatusTables( res, influx, database) {
   return res.send(env.render('status.html', { defaultMessage }));
 }
 
+async function getSummaryStatus(influx, metrics) {
+  let summaryStatus = {};
+
+  for (let metric of metrics){
+    const database = metric.database;
+    const resultQuery = await influx.query('SELECT * FROM "status-logs" GROUP BY * ORDER BY "time" DESC LIMIT 1', { database });
+    if (resultQuery[resultQuery.length - 1] !== undefined) {
+      summaryStatus[metric.name] = resultQuery[resultQuery.length - 1].step;
+    } else {
+      summaryStatus[metric.name] = "Not started yet"
+    }
+  }
+  return summaryStatus;
+}
+
 module.exports = {
-  makeStatusTables
+  makeStatusTables,
+  getSummaryStatus
 }
