@@ -91,7 +91,7 @@ const markStatusLogs = async (influxdb, step, timestamp) => {
     try {
         const measurement = [ {
             measurement: "status-logs",
-            tags: {step: step },
+            tags: {step: step},
             fields: { date: timestamp }
         }];
 
@@ -104,6 +104,20 @@ const markStatusLogs = async (influxdb, step, timestamp) => {
     }
 }
 
+const markAllUrls = async(influxdb, allUrls) => {
+    try {
+        const measurement = [ {
+            measurement: "nrUrls",
+            tags: {allUrls : allUrls}
+        }];
+
+        const result = await influxdb.writePoints(measurement);
+        return result;
+    } catch (err) {
+        return Promise.reject('Failed to insert number of all urls.');
+    }
+}
+
 module.exports = {
     init,
     list_db,
@@ -111,5 +125,6 @@ module.exports = {
     saveData,
     markSuccess,
     markStatus,
-    markStatusLogs
+    markStatusLogs,
+    markAllUrls
 }
