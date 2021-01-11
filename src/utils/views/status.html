@@ -1,17 +1,25 @@
 {% extends "base.html" %}
 {% block head %}
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<style>
+    div.container {
+    width:95%; 
+  }
+</style>
 {% endblock %}
 <script>
 
 </script>
+
 {% block content %}
 <body>
     <br>
-    <h1> {{ defaultMessage }} </h1>
-    <br>
-    
-    <div class="table-responsive">
+    <div class="table-responsive container">
+        <h1> {{ defaultMessage }} </h1>
+        <br>
+        <br>
+        <h2> {{ database }} </h2>
+        <br>
         <table
             class="table table-striped"
             id="data-table"
@@ -84,7 +92,7 @@
     <br>
     <br>
     {% if tablesToShow.finish %}
-    <div class="table-responsive">
+    <div class="table-responsive container">
         <table
             class="table table-striped"
             id="data-table"
@@ -115,10 +123,10 @@
                         Last Performed
                     </th>
                     <td>
-                        {{ startTime }}
+                        {{ moment(startTime).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
-                        {{ totalRunningTime }}
+                        {{ totalRunningTime }} s
                     </td>
                     <td>
                        {{ countSuccess }} / {{ nrUrls }}
