@@ -24,8 +24,7 @@ async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, databa
         failedChecks: failedChecks.length,
         startTime: startTimestamp,
         duration: duration
-    }
-
+    } 
     return currentChecks;
 }
 
@@ -71,27 +70,41 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
   const currentRetries = {
     retries
   };
-
   return currentRetries;
 }
 
-async function makeStatusTables( res, influx, database) {
-  const defaultMessage = "Plugin has not started yet.";
+async function makeStatusTables(res, influx, database) {
+  const obj = await makeStatusTablesHelper(influx, database);
+  return res.send(env.render('status.html', obj ));
+}
 
+async function makeStatusTablesHelper(influx, database) {
+  const defaultMessage = "Plugin has not started yet.";
+  summaryStatus[database] = {success : 0, allUrls : 0};
+  
   let tablesToShow = {
     first: false,
     retries: false,
     finish: false
   };
   let statusLogsQuery = [];
+  let allUrls = 0;
   if (database === undefined) {
       statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc');
+      const query = await influx.query('select * from nrUrls');
+      if (query[0] !== undefined) {
+        allUrls = query[0].allUrls;
+      }
   } else {
       statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc', { database });
+      const query = await influx.query('select * from nrUrls', {database});
+      if (query[0] !== undefined) {
+        allUrls=query[0].allUrls;
+      }
   }
-
+  summaryStatus[database].allUrls = allUrls;
   if (statusLogsQuery.length === 0) {
-    return res.send(env.render('status.html', { defaultMessage }));
+    return { defaultMessage };
   }
   statusLogsQuery.sort((a, b) => {
     return a.time.getNanoTime() - b.time.getNanoTime();
@@ -107,9 +120,7 @@ async function makeStatusTables( res, influx, database) {
     waitingTimestamp = statusLogsRows[1].time.getNanoTime();
   }
 
-  const urlsQuery = await influx.query(`select count(*) from status where time <= ${waitingTimestamp} and time >= ${startTimestamp} and state = '0'`, { database })
-  const nrUrls = urlsQuery[0].count_retry;
-
+  const nrUrls = allUrls;
   const currentlyRunningChecksTable = await getCurrentChecks(influx, waitingTimestamp, startTimestamp, database);
   const currentlyRunningRetriesTable = await getCurrentRetries(influx, waitingTimestamp, statusLogsRows.slice(2), database);
 
@@ -117,13 +128,13 @@ async function makeStatusTables( res, influx, database) {
       statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
 
     tablesToShow.first = true;
-    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, tablesToShow }));
+    return {nrUrls, currentlyRunningChecksTable, tablesToShow };
       
   } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
   
     tablesToShow.first = true;
     tablesToShow.retries = true;
-    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow }));
+    return { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow };
 
   } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
     
@@ -136,28 +147,29 @@ async function makeStatusTables( res, influx, database) {
     } else {
       successful = await influx.query(`select * from success where time>=${startTimestamp}`, { database });      
     }
-  const countSuccess = successful.length;
 
-
+    const countSuccess = successful.length;
+    summaryStatus[database].success = countSuccess;
+    
     tablesToShow.first = true;
     tablesToShow.retries = true;
     tablesToShow.finish = true;
-    return res.send(env.render('status.html', { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable,
-      startTime, totalRunningTime, countSuccess, tablesToShow }));
+    summaryStatus[database].success = countSuccess;
+    return {nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow };
   }
-  return res.send(env.render('status.html', { defaultMessage }));
+  return {defaultMessage};
 }
 
+let summaryStatus = {};
 async function getSummaryStatus(influx, metrics) {
-  let summaryStatus = {};
-
   for (let metric of metrics){
     const database = metric.database;
     const resultQuery = await influx.query('SELECT * FROM "status-logs" GROUP BY * ORDER BY "time" DESC LIMIT 1', { database });
+    await makeStatusTablesHelper(influx, database);
     if (resultQuery[resultQuery.length - 1] !== undefined) {
       summaryStatus[metric.name] = resultQuery[resultQuery.length - 1].step;
     } else {
-      summaryStatus[metric.name] = "Not started yet"
+      summaryStatus[metric.name] = "No data yet"
     }
   }
   return summaryStatus;
