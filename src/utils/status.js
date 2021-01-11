@@ -1,11 +1,15 @@
 const TIME_IN_SECONDS = 1000000000;
 const TIME_IN_NANOS = 1000000;
 const nunjucks = require('nunjucks');
+const moment = require('moment');
 
 const env = nunjucks.configure(`${__dirname}/views`, {
   autoescape: true,
   watch: true,
 })
+
+env.addGlobal('moment', moment);
+
 
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {
     let runningChecks = [];
@@ -23,7 +27,7 @@ async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, databa
         runningChecks: runningChecks.length,
         failedChecks: failedChecks.length,
         startTime: startTimestamp,
-        duration: duration
+        duration: duration.toFixed(2)
     } 
     return currentChecks;
 }
@@ -44,7 +48,7 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
   for (let i = 0; i < statusLogsRows.length - 1; i++) {
     if (statusLogsRows[i].step.includes("RETRY")) {
       retries.push({
-        duration: (statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS,
+        duration: ((statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS).toFixed(2),
         success: 0,
         fail : 0
       });
@@ -102,9 +106,10 @@ async function makeStatusTablesHelper(influx, database) {
         allUrls=query[0].allUrls;
       }
   }
+
   summaryStatus[database].allUrls = allUrls;
   if (statusLogsQuery.length === 0) {
-    return { defaultMessage };
+    return { defaultMessage, database };
   }
   statusLogsQuery.sort((a, b) => {
     return a.time.getNanoTime() - b.time.getNanoTime();
@@ -128,36 +133,40 @@ async function makeStatusTablesHelper(influx, database) {
       statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
 
     tablesToShow.first = true;
-    return {nrUrls, currentlyRunningChecksTable, tablesToShow };
+    return {nrUrls, currentlyRunningChecksTable, tablesToShow, database };
       
-  } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
-  
+  } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY") && 
+    currentlyRunningRetriesTable.retries !== undefined && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
+    
     tablesToShow.first = true;
     tablesToShow.retries = true;
-    return { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow };
+    return { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow, database };
 
   } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
     
     const finishTime = statusLogsRows[statusLogsRows.length - 1].time.getNanoTime();
-    const totalRunningTime = (finishTime - startTimestamp) / TIME_IN_SECONDS;
+    const totalRunningTime = ((finishTime - startTimestamp) / TIME_IN_SECONDS).toFixed(2);
+    
 
     let successful = [];
     if (database === undefined) {
-      successful = await influx.query(`select * from success where time>=${startTimestamp}`);      
+      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`);      
     } else {
-      successful = await influx.query(`select * from success where time>=${startTimestamp}`, { database });      
+      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`, { database });      
     }
 
     const countSuccess = successful.length;
     summaryStatus[database].success = countSuccess;
     
     tablesToShow.first = true;
-    tablesToShow.retries = true;
+    if (currentlyRunningRetriesTable.retries !== undefined && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
+      tablesToShow.retries = true;
+    }
     tablesToShow.finish = true;
     summaryStatus[database].success = countSuccess;
-    return {nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow };
+    return {nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database };
   }
-  return {defaultMessage};
+  return {defaultMessage, database};
 }
 
 let summaryStatus = {};
