@@ -84,8 +84,8 @@ async function makeStatusTables(res, influx, database) {
 
 async function makeStatusTablesHelper(influx, database) {
   const defaultMessage = "Plugin has not started yet.";
-  summaryStatus[database] = {success : 0, allUrls : 0};
-  
+  summaryStatus[database] = {success : 0, allUrls : 0, lastRun: '-'};
+
   let tablesToShow = {
     first: false,
     retries: false,
@@ -118,6 +118,7 @@ async function makeStatusTablesHelper(influx, database) {
   const statusLogsRows = statusLogsQuery.slice(idx);
   const startTimestamp = statusLogsRows[0].time.getNanoTime();
   const startTime = statusLogsRows[0].time.toISOString();
+  summaryStatus[database].lastRun = startTime.substr(0, 16).replace("T", " ");
 
   let waitingTimestamp = Date.now() * TIME_IN_NANOS;
   if (statusLogsRows.length >= 2) {
