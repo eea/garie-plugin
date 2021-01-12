@@ -106,6 +106,7 @@ async function makeStatusTablesHelper(influx, database) {
   if (urlsQuery.length > 0) {
     summaryStatus[database].allUrls = urlsQuery[urlsQuery.length - 1].allUrls;
   }
+  const nrUrls = summaryStatus[database].allUrls;
   
   if (statusLogsQuery.length === 0) {
     return { defaultMessage, database };
@@ -125,7 +126,6 @@ async function makeStatusTablesHelper(influx, database) {
     waitingTimestamp = statusLogsRows[1].time.getNanoTime();
   }
 
-  const nrUrls = allUrls;
   const currentlyRunningChecksTable = await getCurrentChecks(influx, waitingTimestamp, startTimestamp, database);
   const currentlyRunningRetriesTable = await getCurrentRetries(influx, waitingTimestamp, statusLogsRows.slice(2), database);
 
