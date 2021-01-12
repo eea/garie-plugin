@@ -108,7 +108,8 @@ const markAllUrls = async(influxdb, allUrls) => {
     try {
         const measurement = [ {
             measurement: "nrUrls",
-            tags: {allUrls : allUrls}
+            tags: {allUrls : allUrls},
+            fields: { date: Date.now() }
         }];
 
         const result = await influxdb.writePoints(measurement);
