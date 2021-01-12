@@ -91,23 +91,22 @@ async function makeStatusTablesHelper(influx, database) {
     retries: false,
     finish: false
   };
+
   let statusLogsQuery = [];
-  let allUrls = 0;
+  let urlsQuery = [];
+
   if (database === undefined) {
       statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc');
-      const query = await influx.query('select * from nrUrls');
-      if (query[0] !== undefined) {
-        allUrls = query[0].allUrls;
-      }
+      urlsQuery = await influx.query('select * from nrUrls');
   } else {
       statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc', { database });
-      const query = await influx.query('select * from nrUrls', {database});
-      if (query[0] !== undefined) {
-        allUrls=query[0].allUrls;
-      }
+      urlsQuery = await influx.query('select * from nrUrls', {database});
   }
 
-  summaryStatus[database].allUrls = allUrls;
+  if (urlsQuery.length > 0) {
+    summaryStatus[database].allUrls = urlsQuery[urlsQuery.length - 1].allUrls;
+  }
+  
   if (statusLogsQuery.length === 0) {
     return { defaultMessage, database };
   }
