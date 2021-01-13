@@ -113,8 +113,10 @@ const markAllUrls = async(influxdb, allUrls) => {
         }];
 
         const result = await influxdb.writePoints(measurement);
+        console.log(`Successfully added ${allUrls} urls.`);
         return result;
     } catch (err) {
+        console.log(`Failed to insert number of urls ${err}`);
         return Promise.reject('Failed to insert number of all urls.');
     }
 }
