@@ -13,8 +13,8 @@ async function getDataForItem(item, retries){
 
     const { url } = item.url_settings;
 
-    await influx.markStatus(item.influx_obj, url, 0, Date.now(), retries);
     try{
+        await influx.markStatus(item.influx_obj, url, 0, Date.now(), retries);
         const data = await plugin_getData(item);
         var isSuccess = true;
         if (data !== null){
@@ -70,8 +70,12 @@ async function getFailedUrls(settings){
 const getDataForAllUrls = async(options) => {
     var items_to_process = options.items;    
     const all_urls = items_to_process.map(url => url.url_settings.url);
-    await influx.markStatusLogs(options.influx, "START", Date.now());
-    await influx.markAllUrls(options.influx, all_urls.length);
+    try{
+        await influx.markStatusLogs(options.influx, "START", Date.now());
+        await influx.markAllUrls(options.influx, all_urls.length);
+    } catch(err) {
+        console.log(`Failed to START and add number of all urls ${err}`);
+    }
 
     var retries = 0;
     var skip_retry;
@@ -96,48 +100,52 @@ const getDataForAllUrls = async(options) => {
             }
         }
         skip_retry = false;
-        if (options.retryTimes === retries){
-            console.log('No more retries');
-            await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
-            break;
-        }
-        else {
-            retries++;
-            if (retries <= 1) {
-                await influx.markStatusLogs(options.influx, "WAITING", Date.now());
-            }
-            console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
-            await sleep(options.retryAfter * 60000);
-            var options_failed = {
-                influx: options.influx,
-                retryTimeRange: options.retryTimeRange,
-                urls: all_urls
-            };
-            try{
-                var failedUrls = await getFailedUrls(options_failed);
-            }
-            catch(err){
-                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                console.log("Retry: " + retries + "/" + options.retryTimes);
-                console.log("Failed retrieving failed urls");
-                skip_retry = true;
-                continue;
-            }
-            if (failedUrls.length === 0){
-                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                console.log("Retry: " + retries + "/" + options.retryTimes);
-                console.log('All tasks were executed successfully');
+        try {
+            if (options.retryTimes === retries){
+                console.log('No more retries');
                 await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
                 break;
             }
             else {
-                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                console.log('There are ' + failedUrls.length +' failed tasks:');
-                console.log(failedUrls);
-                console.log("Retry: " + retries + "/" + options.retryTimes);
-                items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
-                continue;
+                retries++;
+                if (retries <= 1) {
+                    await influx.markStatusLogs(options.influx, "WAITING", Date.now());
+                }
+                console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
+                await sleep(options.retryAfter * 60000);
+                var options_failed = {
+                    influx: options.influx,
+                    retryTimeRange: options.retryTimeRange,
+                    urls: all_urls
+                };
+                try{
+                    var failedUrls = await getFailedUrls(options_failed);
+                }
+                catch(err){
+                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                    console.log("Retry: " + retries + "/" + options.retryTimes);
+                    console.log("Failed retrieving failed urls");
+                    skip_retry = true;
+                    continue;
+                }
+                if (failedUrls.length === 0){
+                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                    console.log("Retry: " + retries + "/" + options.retryTimes);
+                    console.log('All tasks were executed successfully');
+                    await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
+                    break;
+                }
+                else {
+                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                    console.log('There are ' + failedUrls.length +' failed tasks:');
+                    console.log(failedUrls);
+                    console.log("Retry: " + retries + "/" + options.retryTimes);
+                    items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
+                    continue;
+                }
             }
+        } catch(err) {
+            console.log(`Failed to mark step in status logs ${err}`);
         }
     }
 }
