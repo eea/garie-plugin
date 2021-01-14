@@ -174,12 +174,19 @@ async function getSummaryStatus(influx, metrics) {
   for (let metric of metrics){
     const database = metric.database;
     const resultQuery = await influx.query('SELECT * FROM "status-logs" GROUP BY * ORDER BY "time" DESC LIMIT 1', { database });
-    await makeStatusTablesHelper(influx, database);
+    resultQuery.sort((a, b) => {
+      return a.time.getNanoTime() - b.time.getNanoTime();
+    });
     if (resultQuery[resultQuery.length - 1] !== undefined) {
-      summaryStatus[metric.name] = resultQuery[resultQuery.length - 1].step;
+      if (resultQuery[resultQuery.length - 1].step === "FINISHED") {
+        summaryStatus[metric.name] = "FINISHED";
+      } else {
+        summaryStatus[metric.name] = "IN PROGRESS";
+      }
     } else {
       summaryStatus[metric.name] = "No data yet"
     }
+    await makeStatusTablesHelper(influx, database);
   }
   return summaryStatus;
 }
