@@ -100,52 +100,48 @@ const getDataForAllUrls = async(options) => {
             }
         }
         skip_retry = false;
-        try {
-            if (options.retryTimes === retries){
-                console.log('No more retries');
+        if (options.retryTimes === retries){
+            console.log('No more retries');
+            await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
+            break;
+        }
+        else {
+            retries++;
+            if (retries <= 1) {
+                await influx.markStatusLogs(options.influx, "WAITING", Date.now());
+            }
+            console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
+            await sleep(options.retryAfter * 60000);
+            var options_failed = {
+                influx: options.influx,
+                retryTimeRange: options.retryTimeRange,
+                urls: all_urls
+            };
+            try{
+                var failedUrls = await getFailedUrls(options_failed);
+            }
+            catch(err){
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                console.log("Retry: " + retries + "/" + options.retryTimes);
+                console.log("Failed retrieving failed urls");
+                skip_retry = true;
+                continue;
+            }
+            if (failedUrls.length === 0){
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                console.log("Retry: " + retries + "/" + options.retryTimes);
+                console.log('All tasks were executed successfully');
                 await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
                 break;
             }
             else {
-                retries++;
-                if (retries <= 1) {
-                    await influx.markStatusLogs(options.influx, "WAITING", Date.now());
-                }
-                console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
-                await sleep(options.retryAfter * 60000);
-                var options_failed = {
-                    influx: options.influx,
-                    retryTimeRange: options.retryTimeRange,
-                    urls: all_urls
-                };
-                try{
-                    var failedUrls = await getFailedUrls(options_failed);
-                }
-                catch(err){
-                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                    console.log("Retry: " + retries + "/" + options.retryTimes);
-                    console.log("Failed retrieving failed urls");
-                    skip_retry = true;
-                    continue;
-                }
-                if (failedUrls.length === 0){
-                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                    console.log("Retry: " + retries + "/" + options.retryTimes);
-                    console.log('All tasks were executed successfully');
-                    await influx.markStatusLogs(options.influx, "FINISHED", Date.now());
-                    break;
-                }
-                else {
-                    await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                    console.log('There are ' + failedUrls.length +' failed tasks:');
-                    console.log(failedUrls);
-                    console.log("Retry: " + retries + "/" + options.retryTimes);
-                    items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
-                    continue;
-                }
+                await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                console.log('There are ' + failedUrls.length +' failed tasks:');
+                console.log(failedUrls);
+                console.log("Retry: " + retries + "/" + options.retryTimes);
+                items_to_process = options.items.filter(function(i){return failedUrls.indexOf(i.url_settings.url) > -1})
+                continue;
             }
-        } catch(err) {
-            console.log(`Failed to mark step in status logs ${err}`);
         }
     }
 }
