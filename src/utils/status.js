@@ -54,20 +54,33 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       });
     }
   }
-    if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
-      retries.push({
-        duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
-        success: 0,
-        fail : 0
-      })
-    }
+
+  if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY")) {
+    retries.push({
+      duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
+      success: 0,
+      fail : 0
+    })
+  }
   
   for (let row of runningRetries) {
-    if (row.state == 1) {
-      retries[row.retry - 1].success++;
+    if (row.state == 1 && row.retry != 0) {
+      if (retries[row.retry - 1] === undefined) {
+        console.log(`Can't mark success or fail at retry nr ${row.retry} in retries of length: ${retries.length}.`);
+        continue;
+      }
+      if (retries[row.retry - 1].success === undefined) {
+        retries[row.retry - 1].success = 1;
+      } else {
+        retries[row.retry - 1].success++;
+      }
       
-    } else if(row.state == 2) {
-      retries[row.retry - 1].fail++;
+    } else if(row.state == 2 && row.retry != 0) {
+      if (retries[row.retry - 1].fail === undefined) {
+        retries[row.retry - 1].fail = 1;
+      } else {
+        retries[row.retry - 1].fail++;
+      }
     }
   }
 
