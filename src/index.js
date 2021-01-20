@@ -193,7 +193,6 @@ const init = async(options) => {
                                 if (err) {
                                     console.log("Can't execute command to delete old reports", err);
                                 } else {
-                                    console.log(stdout);
                                     console.log(`Successfully deleted reports older than ${MAX_AGE_OF_REPORT_FILES} days.`);
                                 }
                             });
