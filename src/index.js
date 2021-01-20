@@ -8,6 +8,13 @@ const utils = require('./utils');
 const { createApp } = require('./utils/app');
 const sleep = require('sleep-promise');
 let numCPUs = require('os').cpus().length;
+const path = require('path');
+const { exec } = require('child_process');
+
+// macros for deleting old report files;
+// can also be customized if added as fields in config.json;
+var MAX_AGE_OF_REPORT_FILES = 365;
+var CRON_DELETE_OLD_REPORTS = ' 0 5 * * *';
 
 async function getDataForItem(item, retries){
 
@@ -147,6 +154,7 @@ const getDataForAllUrls = async(options) => {
 }
 
 const init = async(options) => {
+
     return new Promise(async (resolve, reject) => {
         try{
             var settings = {
@@ -164,6 +172,43 @@ const init = async(options) => {
                 }
             }
             extend(settings, options);
+
+            // delete old report files
+            const pathToReports = path.join(settings.app_root, 'reports', settings.report_folder_name);
+
+            if (settings.config.MAX_AGE_OF_REPORT_FILES !== undefined) {
+                MAX_AGE_OF_REPORT_FILES = settings.config.MAX_AGE_OF_REPORT_FILES;
+            }
+
+            try {
+                if (settings.config.CRON_DELETE_OLD_REPORTS !== undefined) {
+                    CRON_DELETE_OLD_REPORTS = settings.config.CRON_DELETE_OLD_REPORTS;
+                }
+                const cron_config = CRON_DELETE_OLD_REPORTS;
+                if (cron_config) {
+                    new CronJob(
+                        cron_config,
+                        async() => {
+                            exec(`find ${pathToReports} -mindepth 1 -mtime +${MAX_AGE_OF_REPORT_FILES} -delete`, (err, stdout, stderr) => {
+                                if (err) {
+                                    console.log("Can't execute command to delete old reports", err);
+                                } else {
+                                    console.log(stdout);
+                                    console.log(`Successfully deleted reports older than ${MAX_AGE_OF_REPORT_FILES} days.`);
+                                }
+                            });
+                        },
+                        null,
+                        true,
+                        'Europe/London',
+                        null,
+                        true
+                    );
+                }
+            } catch(err) {
+                console.log("CronJob not configured to delete old reports", err);
+            }
+
             const influx_obj = influx.init(settings.db_name)
             var retries = 0;
             var shouldInterrupt = false;
