@@ -194,7 +194,7 @@ const init = async(options) => {
                     new CronJob(
                         cron_config,
                         async() => {
-                            exec(`find ${pathToReports} -name "*.mp4" -mindepth 1 -mtime +${MAX_AGE_OF_REPORT_VIDEOS} -print`, (err, stdout, stderr) => {
+                            exec(`find ${pathToReports} -name "*.mp4" -mindepth 1 -mtime +${MAX_AGE_OF_REPORT_VIDEOS} -delete`, (err, stdout, stderr) => {
                                 if (err) {
                                     console.log("Can't execute command to delete old reports videos", err);
                                 } else {
@@ -202,7 +202,7 @@ const init = async(options) => {
                                 }
                             });
 
-                            exec(`find ${pathToReports} -mindepth 1 -mtime +${MAX_AGE_OF_REPORT_FILES} -print`, (err, stdout, stderr) => {
+                            exec(`find ${pathToReports} -mindepth 1 -mtime +${MAX_AGE_OF_REPORT_FILES} -delete`, (err, stdout, stderr) => {
                                 if (err) {
                                     console.log("Can't execute command to delete old reports files", err);
                                 } else {
