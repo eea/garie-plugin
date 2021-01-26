@@ -202,7 +202,7 @@ const init = async(options) => {
                                 }
                             });
 
-                            exec(`find ${pathToReports} -mindepth 2 -mtime +${MAX_AGE_OF_REPORT_FILES} -type d -delete`, (err, stdout, stderr) => {
+                            exec(`find ${pathToReports} -mindepth 2 -maxdepth 2 -mtime +${MAX_AGE_OF_REPORT_FILES} -type d -exec rm -r {} +`, (err, stdout, stderr) => {
                                 if (err) {
                                     console.log("Can't execute command to delete old reports files", err);
                                 } else {
