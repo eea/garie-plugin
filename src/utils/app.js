@@ -27,8 +27,6 @@ const createApp = (settings, influx_obj) => {
 
     if (settings.onDemand) {
     const scanQueue = {};
-    let data = {};
-    let measurement = [];
 
     const launchScanOnDemand = async (url, scan) => {
       try {
