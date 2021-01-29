@@ -49,19 +49,25 @@ const saveData = async (influxdb, url, measurement) => {
     }
 }
 
-const markSuccess = async (influxdb, url) => {
+const savePoints = async (influxdb, points, option) => {
     try {
-        const measurement = [ { measurement: 'success',
-            tags: { url: url },
-            fields: { success: true } } ];
-        const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully marked ${influxdb.config.database} data for ${url} as success`);
+        const result = await influxdb.writePoints(points);
+        console.log(`Successfully saved data for ${option} into ${points[0].measurement}.`);
         return result;
     } catch (err) {
-        console.log(`Failed to save data for ${url}`, err);
-        return Promise.reject(`Failed to mark data into influxdb for ${url}`);
+        console.log(`Failed to mark point into ${points[0].measurement}`, err);
+        return Promise.reject(`Failed to mark data into influxdb for ${points[0].measurement}`);
     }
 }
+
+const markSuccess = (url) => {
+    const measurement =  { measurement: 'success',
+        tags: { url: url },
+        fields: { success: true } };
+    return measurement;
+}
+
+
 
 /*
    state = {0, 1, 2}
@@ -69,57 +75,38 @@ const markSuccess = async (influxdb, url) => {
    1 -> finished successfully
    2 -> failed
 */
-const markStatus = async (influxdb, url, state, timestamp, retry) => {
-    try {
-        const measurement = [ {
-            measurement: "status",
-            tags: { url: url, state: state },
-            fields: { retry: retry }           
-        }];
+const markStatus = (url, state, retry) => {
+    const measurement =  {
+        measurement: "status",
+        tags: { url: url, state: state },
+        fields: { retry: retry }
+    };
 
-        const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully added the state ${state} for ${url}`);
-        return result;
-    } catch (err) {
-        console.log(`Failed to add the state for ${url}`);
-        return Promise.reject(`Failed to add data to status.`)
-    }
+    return measurement;
 }
 
-// steps = {START, WAITING, RETRY 1, RETRY 2, ..., FINISHED}
-const markStatusLogs = async (influxdb, step, timestamp) => {
-    try {
-        const measurement = [ {
-            measurement: "status-logs",
-            tags: {step: step},
-            fields: { date: timestamp }
-        }];
 
-        const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully added step ${step}`);
-        return result;
-    } catch (err) {
-        console.log(`Failed to add step ${step}`);
-        return Promise.reject(`Failed to add step ${step}.`)
-    }
+const markStatusLogs = (step, timestamp) => {
+    const measurement = {
+        measurement: "status-logs",
+        tags: {step: step},
+        fields: { date: timestamp }
+    };
+    return measurement;
 }
 
-const markAllUrls = async(influxdb, allUrls) => {
-    try {
-        const measurement = [ {
-            measurement: "nrUrls",
-            tags: {allUrls : allUrls},
-            fields: { date: Date.now() }
-        }];
 
-        const result = await influxdb.writePoints(measurement);
-        console.log(`Successfully added ${allUrls} urls.`);
-        return result;
-    } catch (err) {
-        console.log(`Failed to insert number of urls ${err}`);
-        return Promise.reject('Failed to insert number of all urls.');
-    }
+const markAllUrls = (allUrls) => {
+    const measurement = {
+        measurement: "nrUrls",
+        tags: {allUrls : allUrls},
+        fields: { date: Date.now() }
+    };
+
+    return measurement;
 }
+
+
 
 module.exports = {
     init,
@@ -129,5 +116,6 @@ module.exports = {
     markSuccess,
     markStatus,
     markStatusLogs,
-    markAllUrls
+    markAllUrls,
+    savePoints
 }
