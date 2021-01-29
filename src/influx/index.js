@@ -49,7 +49,7 @@ const saveData = async (influxdb, url, measurement) => {
     }
 }
 
-const markPoints = async (influxdb, points, option) => {
+const savePoints = async (influxdb, points, option) => {
     try {
         const result = await influxdb.writePoints(points);
         console.log(`Successfully saved data for ${option} into ${points[0].measurement}.`);
@@ -60,7 +60,7 @@ const markPoints = async (influxdb, points, option) => {
     }
 }
 
-const markSuccess = async (url) => {
+const markSuccess = (url) => {
     const measurement =  { measurement: 'success',
         tags: { url: url },
         fields: { success: true } };
@@ -75,7 +75,7 @@ const markSuccess = async (url) => {
    1 -> finished successfully
    2 -> failed
 */
-const markStatus = async (url, state, retry) => {
+const markStatus = (url, state, retry) => {
     const measurement =  {
         measurement: "status",
         tags: { url: url, state: state },
@@ -86,7 +86,7 @@ const markStatus = async (url, state, retry) => {
 }
 
 
-const markStatusLogs = async (step, timestamp) => {
+const markStatusLogs = (step, timestamp) => {
     const measurement = {
         measurement: "status-logs",
         tags: {step: step},
@@ -96,7 +96,7 @@ const markStatusLogs = async (step, timestamp) => {
 }
 
 
-const markAllUrls = async(allUrls) => {
+const markAllUrls = (allUrls) => {
     const measurement = {
         measurement: "nrUrls",
         tags: {allUrls : allUrls},
@@ -117,5 +117,5 @@ module.exports = {
     markStatus,
     markStatusLogs,
     markAllUrls,
-    markPoints
+    savePoints
 }

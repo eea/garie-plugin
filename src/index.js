@@ -22,8 +22,8 @@ async function getDataForItem(item, retries){
     const { url } = item.url_settings;
 
     try{
-        const pointStatus = await influx.markStatus(url, 0, retries);
-        await influx.markPoints(item.influx_obj, [pointStatus], url);
+        const pointStatus = influx.markStatus(url, 0, retries);
+        await influx.savePoints(item.influx_obj, [pointStatus], url);
         const data = await plugin_getData(item);
         var isSuccess = true;
         if (data !== null){
@@ -35,13 +35,13 @@ async function getDataForItem(item, retries){
             await influx.saveData(item.influx_obj, url, measurement);
         }
         if (isSuccess){
-            const pointSuccess = await influx.markSuccess(url);
-            const pointStatus = await influx.markStatus( url, 1, retries);
-            await influx.markPoints(item.influx_obj, [pointSuccess, pointStatus], url);
+            const pointSuccess = influx.markSuccess(url);
+            const pointStatus = influx.markStatus( url, 1, retries);
+            await influx.savePoints(item.influx_obj, [pointSuccess, pointStatus], url);
 
         } else {
-            const pointStatus = await influx.markStatus(url, 2, retries);
-            await influx.markPoints(item.influx_obj, [pointStatus], url);
+            const pointStatus = influx.markStatus(url, 2, retries);
+            await influx.savePoints(item.influx_obj, [pointStatus], url);
         }
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
@@ -82,9 +82,9 @@ const getDataForAllUrls = async(options) => {
     var items_to_process = options.items;    
     const all_urls = items_to_process.map(url => url.url_settings.url);
     try{
-        const pointStatusLogs = await influx.markStatusLogs("START", Date.now());
-        const pointUrls = await influx.markAllUrls(all_urls.length);
-        await influx.markPoints(options.influx, [pointStatusLogs, pointUrls], "START");
+        const pointStatusLogs = influx.markStatusLogs("START", Date.now());
+        const pointUrls = influx.markAllUrls(all_urls.length);
+        await influx.savePoints(options.influx, [pointStatusLogs, pointUrls], "START");
     } catch(err) {
         console.log(`Failed to START and add number of all urls ${err}`);
     }
@@ -114,15 +114,15 @@ const getDataForAllUrls = async(options) => {
         skip_retry = false;
         if (options.retryTimes === retries){
             console.log('No more retries');
-            const pointLogs = await influx.markStatusLogs("FINISHED", Date.now());
-            await influx.markPoints(options.influx, [pointLogs], "FINISHED");
+            const pointLogs = influx.markStatusLogs("FINISHED", Date.now());
+            await influx.savePoints(options.influx, [pointLogs], "FINISHED");
             break;
         }
         else {
             retries++;
             if (retries <= 1) {
-                const pointStatusLogs = await influx.markStatusLogs("WAITING", Date.now());
-                await influx.markPoints(options.influx, [pointStatusLogs], "WAITING");
+                const pointStatusLogs = influx.markStatusLogs("WAITING", Date.now());
+                await influx.savePoints(options.influx, [pointStatusLogs], "WAITING");
             }
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
             await sleep(options.retryAfter * 60000);
@@ -135,24 +135,24 @@ const getDataForAllUrls = async(options) => {
                 var failedUrls = await getFailedUrls(options_failed);
             }
             catch(err){
-                const pointStatusLogs = await influx.markStatusLogs(`RETRY ${retries}`, Date.now());
-                await influx.markPoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
+                const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
+                await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log("Failed retrieving failed urls");
                 skip_retry = true;
                 continue;
             }
             if (failedUrls.length === 0){
-                const pointStatusLogsFirst = await influx.markStatusLogs(`RETRY ${retries}`, Date.now());
+                const pointStatusLogsFirst = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log('All tasks were executed successfully');
-                const pointStatusLogsSecond = await influx.markStatusLogs("FINISHED", Date.now());
-                await influx.markPoints(item.influx_obj, [pointStatusLogsFirst, pointStatusLogsSecond]);
+                const pointStatusLogsSecond = influx.markStatusLogs("FINISHED", Date.now());
+                await influx.savePoints(item.influx_obj, [pointStatusLogsFirst, pointStatusLogsSecond]);
                 break;
             }
             else {
-                const pointStatusLogs = await influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
-                await influx.markPoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
+                const pointStatusLogs = influx.markStatusLogs(options.influx, `RETRY ${retries}`, Date.now());
+                await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
                 console.log('There are ' + failedUrls.length +' failed tasks:');
                 console.log(failedUrls);
                 console.log("Retry: " + retries + "/" + options.retryTimes);
