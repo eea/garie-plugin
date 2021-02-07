@@ -147,7 +147,7 @@ const getDataForAllUrls = async(options) => {
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log('All tasks were executed successfully');
                 const pointStatusLogsSecond = influx.markStatusLogs("FINISHED", Date.now());
-                await influx.savePoints(item.influx_obj, [pointStatusLogsFirst, pointStatusLogsSecond]);
+                await influx.savePoints(options.influx, [pointStatusLogsFirst, pointStatusLogsSecond]);
                 break;
             }
             else {
