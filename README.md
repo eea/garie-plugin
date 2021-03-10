@@ -6,6 +6,15 @@ Create a github repo for your plugin, for the tutorial we will call it: "my_gari
 Copy the contents of https://github.com/eea/garie-plugin/tree/master/skelet into your repo.
 Look for <my_garie_plugin> and modify it for your plugin.
 
+## Environment variables
+
+### Influx db related
+
+* `INFLUX_HOST` or `HOST` - influxdb host, default 'localhost'
+* `INFLUX_PORT` - influxdb port, default '8086'
+* `INFLUX_USERNAME` - influxdb user
+* `INFLUX_PASSWORD` - influxdb password
+
 ## Helper functions
 Some common functions, what are used in most of our plugins are available in utils.helpers. These can be accessed like this:
 ```
