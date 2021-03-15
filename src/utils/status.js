@@ -5,7 +5,7 @@ const moment = require('moment');
 
 const env = nunjucks.configure(`${__dirname}/views`, {
   autoescape: true,
-  watch: true,
+  watch: false,
 })
 
 env.addGlobal('moment', moment);
