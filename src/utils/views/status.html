@@ -54,7 +54,8 @@
                         {{ currentlyRunningChecksTable.failedChecks }} / {{ nrUrls }}
                     </td>
                     <td>
-                        Run for {{ currentlyRunningChecksTable.duration }} s
+                        {% set time = currentlyRunningChecksTable.duration %}
+                        Run for {{ time/ 3600 }}h {{ (time % 3600) / 60 }}m {{ time % 60 }}s
                     </td>
                 </tr>
             </tbody>
@@ -81,7 +82,8 @@
                                 {% endif %}
                             </td>
                             <td>
-                                Run for: {{ row.duration }} s
+                                {% set time = row.duration %}
+                                Run for: {{ time/ 3600 }}h {{ (time % 3600) / 60 }}m {{ time % 60 }}s
                             </td>
                         </tr>
                     </tbody>
