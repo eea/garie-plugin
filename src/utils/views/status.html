@@ -55,7 +55,7 @@
                     </td>
                     <td>
                         {% set time = currentlyRunningChecksTable.duration %}
-                        Run for {{ time/ 3600 |round|int }}h {{ (time % 3600) / 60 |round|int }}m {{ time % 60 |round|int }}s
+                        Run for {{ (time/ 3600) |round|int }}h {{ ((time % 3600) / 60) |round|int }}m {{ (time % 60) |round|int }}s
                     </td>
                 </tr>
             </tbody>
@@ -83,7 +83,7 @@
                             </td>
                             <td>
                                 {% set time = row.duration %}
-                                Run for {{ time/ 3600 |round|int }}h {{ (time % 3600) / 60 |round|int }}m {{ time % 60 |round|int }}s
+                                Run for {{ (time/ 3600) |round|int }}h {{ ((time % 3600) / 60) |round|int }}m {{ (time % 60) |round|int }}s
                             </td>
                         </tr>
                     </tbody>
