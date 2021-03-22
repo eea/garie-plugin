@@ -209,7 +209,13 @@ async function getSummaryStatus(influx, metrics) {
     await makeStatusTablesHelper(influx, database);
 
     summaryStatus[metric.name].alive = 'unknown';
-    const host = 'garie-' + metric.database;
+    let host = "garie-";
+    //codeage database names differs from the service name
+    if (metric.database === "code-age") {
+      host += "codeage";
+    } else {
+      host += metric.database;
+    }
     const alive = await ping.promise.probe(host);
 
     if (alive.alive === false) {
