@@ -1,6 +1,7 @@
 const TIME_IN_SECONDS = 1000000000;
 const TIME_IN_NANOS = 1000000;
 const nunjucks = require('nunjucks');
+const ping = require('ping');
 const moment = require('moment');
 
 const env = nunjucks.configure(`${__dirname}/views`, {
@@ -184,7 +185,13 @@ async function makeStatusTablesHelper(influx, database) {
 
 let summaryStatus = {};
 async function getSummaryStatus(influx, metrics) {
+
   for (let metric of metrics){
+
+    if (summaryStatus[metric.name] === undefined) {
+      summaryStatus[metric.name] = {};
+    }
+
     const database = metric.database;
     const resultQuery = await influx.query('SELECT * FROM "status-logs" GROUP BY * ORDER BY "time" DESC LIMIT 1', { database });
     resultQuery.sort((a, b) => {
@@ -192,14 +199,25 @@ async function getSummaryStatus(influx, metrics) {
     });
     if (resultQuery[resultQuery.length - 1] !== undefined) {
       if (resultQuery[resultQuery.length - 1].step === "FINISHED") {
-        summaryStatus[metric.name] = "FINISHED";
+        summaryStatus[metric.name].status = "FINISHED";
       } else {
-        summaryStatus[metric.name] = "IN PROGRESS";
+        summaryStatus[metric.name].status = "IN PROGRESS";
       }
     } else {
-      summaryStatus[metric.name] = "No data yet"
+        summaryStatus[metric.name].status = "No data yet"
     }
     await makeStatusTablesHelper(influx, database);
+
+    summaryStatus[metric.name].alive = 'unknown';
+    const host = 'garie-' + metric.database;
+    const alive = await ping.promise.probe(host);
+
+    if (alive.alive === false) {
+      summaryStatus[metric.name].alive = 'DOWN';
+    } else {
+      summaryStatus[metric.name].alive = 'UP';
+    }
+
   }
   return summaryStatus;
 }
