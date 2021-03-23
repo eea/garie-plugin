@@ -33,7 +33,8 @@
         "serve-index": "^1.9.1",
         "sleep-promise": "8.0.1",
         "winston": "^3.0.0",
-        "chokidar": "^3.3.0"
+        "chokidar": "^3.3.0",
+        "ping": "0.4.0"
     },
     "devDependencies": {
         "codecov": "^3.0.0",
