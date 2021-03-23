@@ -194,6 +194,8 @@ async function getSummaryStatus(influx, metrics) {
 
     const database = metric.database;
     const resultQuery = await influx.query('SELECT * FROM "status-logs" GROUP BY * ORDER BY "time" DESC LIMIT 1', { database });
+    console.log(` For database ${metric.database} status logs query:`);
+    console.log(resultQuery);
     resultQuery.sort((a, b) => {
       return a.time.getNanoTime() - b.time.getNanoTime();
     });
