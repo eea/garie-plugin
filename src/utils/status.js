@@ -199,7 +199,17 @@ async function getSummaryStatus(influx, metrics) {
     });
     if (resultQuery[resultQuery.length - 1] !== undefined) {
       if (resultQuery[resultQuery.length - 1].step === "FINISHED") {
+        const finishTime = resultQuery[resultQuery.length - 1].time.getNanoTime();
+        let i = 1;
+        let startTime = 0;
+        while (resultQuery.length >= i && resultQuery[resultQuery.length - i].step !== "START") {
+          i++;
+        }
+        if (resultQuery[resultQuery.length - i].step === "START") {
+          startTime = resultQuery[resultQuery.length - i].time.getNanoTime();
+        }
         summaryStatus[metric.name].status = "FINISHED";
+        summaryStatus[metric.name].duration = ((finishTime - startTime) / TIME_IN_SECONDS).toFixed(0);
       } else {
         summaryStatus[metric.name].status = "IN PROGRESS";
       }
