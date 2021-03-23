@@ -206,6 +206,7 @@ async function getSummaryStatus(influx, metrics) {
           i++;
         }
         if (resultQuery[resultQuery.length - i].step === "START") {
+          console.log("Found START point to compute duration");
           startTime = resultQuery[resultQuery.length - i].time.getNanoTime();
         }
         summaryStatus[metric.name].status = "FINISHED";
