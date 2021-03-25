@@ -150,7 +150,7 @@ async function makeStatusTablesHelper(influx, database) {
     return {nrUrls, currentlyRunningChecksTable, tablesToShow, database };
       
   } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY") && 
-    currentlyRunningRetriesTable.retries !== undefined && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
+    currentlyRunningRetriesTable.retries.length > 0 && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
     
     tablesToShow.first = true;
     tablesToShow.retries = true;
@@ -173,7 +173,7 @@ async function makeStatusTablesHelper(influx, database) {
     summaryStatus[database].success = countSuccess;
     
     tablesToShow.first = true;
-    if (currentlyRunningRetriesTable.retries !== undefined && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
+    if (currentlyRunningRetriesTable.retries.length > 0 && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
       tablesToShow.retries = true;
     }
     tablesToShow.finish = true;
