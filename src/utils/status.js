@@ -14,14 +14,14 @@ env.addGlobal('moment', moment);
 
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {
     let runningChecks = [];
-    let failedChecks = [];
+    
+    const queryChecks = `select * from status where state=\'1\' or state=\'2\' and time>=${startTimestamp} and retry=0`;
     if (database === undefined) {
-        runningChecks = await influx.query(`select * from status where state=\'1\' or state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
-        failedChecks = await influx.query(`select * from status where state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`);
+        runningChecks = await influx.query(queryChecks);
     } else {
-        runningChecks = await influx.query(`select * from status where state=\'1\' or state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`, { database });
-        failedChecks = await influx.query(`select * from status where state=\'2\' and time<=${waitingTimestamp} and time>=${startTimestamp}`, { database });
+        runningChecks = await influx.query(queryChecks, { database });
     }
+    const failedChecks = runningChecks.filter((elem) => elem.state === '2');
     const duration = (waitingTimestamp - startTimestamp) / TIME_IN_SECONDS;
 
     const currentChecks = {
@@ -51,7 +51,8 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       retries.push({
         duration: ((statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS).toFixed(2),
         success: 0,
-        fail : 0
+        fail : 0,
+        failedUrls: new Set()
       });
     }
   }
@@ -60,7 +61,8 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
     retries.push({
       duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
       success: 0,
-      fail : 0
+      fail : 0,
+      failedUrls: new Set()
     })
   }
   
@@ -82,9 +84,13 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       } else {
         retries[row.retry - 1].fail++;
       }
+      if (row.retry == 3) {
+        retries[row.retry - 1].failedUrls.add(row.url);
+      }
     }
-  }
 
+    
+  }
   const currentRetries = {
     retries
   };

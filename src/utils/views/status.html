@@ -5,6 +5,12 @@
     div.container {
     width:95%; 
   }
+  .errorsList {
+    margin-left: 70px;
+    font-size: large;
+    font-family: Courier New;
+  }
+
 </style>
 {% endblock %}
 <script>
@@ -91,6 +97,7 @@
             {% endif %}
         </table>
     </div>
+
     <br>
     <br>
     {% if tablesToShow.finish %}
@@ -128,7 +135,8 @@
                         {{ moment(startTime).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
-                        {{ totalRunningTime }} s
+                        {% set time = totalRunningTime %}
+                        Run for {{ (time/ 3600) |int }}h {{ ((time % 3600) / 60) |round|int }}m {{ (time % 60) |round|int }}s
                     </td>
                     <td>
                        {{ countSuccess }} / {{ nrUrls }}
@@ -139,7 +147,31 @@
             </tbody>
         </table>
     </div>
+
+    <br>
+    <div class="errorsList">
+        <h4> Urls that failed (and remained unsuccessful even after the last retry): </h4>
+        <br>
+        {% if currentlyRunningRetriesTable.retries[2].failedUrls.size > 0 %}
+            {% for url in currentlyRunningRetriesTable.retries[2].failedUrls %}
+                    <ul>
+                        <li>
+                            {{ url }}
+                        </li>
+                    </ul>
+            {% endfor %}
+        {% else %}
+        <p> No failed urls. </p>
+        {% endif %}
+    </div>
+
     {% endif %}
+    <br>
+    <br>
+
+    
+    
+    
 
     
 </body>

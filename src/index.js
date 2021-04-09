@@ -24,6 +24,7 @@ async function getDataForItem(item, retries){
     try{
         const pointStatus = influx.markStatus(url, 0, retries);
         await influx.savePoints(item.influx_obj, [pointStatus], url);
+        console.log(`Processing url ${url}.`)
         const data = await plugin_getData(item);
         var isSuccess = true;
         if (data !== null){
@@ -38,10 +39,7 @@ async function getDataForItem(item, retries){
             const pointSuccess = influx.markSuccess(url);
             const pointStatus = influx.markStatus( url, 1, retries);
             await influx.savePoints(item.influx_obj, [pointSuccess, pointStatus], url);
-
-        } else {
-            const pointStatus = influx.markStatus(url, 2, retries);
-            await influx.savePoints(item.influx_obj, [pointStatus], url);
+            console.log(`Url ${url} check was successful.`)
         }
     } catch (err) {
         console.log(`Failed to parse ${url}`, err);
@@ -69,7 +67,6 @@ async function getFailedUrls(settings){
             catch(err) {
                 failedUrls = urls;
             }
-
             resolve (failedUrls);
         }
         catch (err){
@@ -111,9 +108,27 @@ const getDataForAllUrls = async(options) => {
                 console.log(err);
             }
         }
+
+        const options_failed = {
+            influx: options.influx,
+            retryTimeRange: options.retryTimeRange,
+            urls: all_urls
+        };
+
         skip_retry = false;
         if (options.retryTimes === retries){
             console.log('No more retries');
+            try{
+                var failedUrls = await getFailedUrls(options_failed);
+                for (let i = 0; i < failedUrls.length; i++) {
+                    const pointStatus = influx.markStatus(failedUrls[i], 2, retries);
+                    await influx.savePoints(options.influx, [pointStatus], failedUrls[i]);
+                }
+            }
+            catch(err){
+                console.log(`Failed to get and save into influx failed urls. ${err}`);
+            }
+
             const pointLogs = influx.markStatusLogs("FINISHED", Date.now());
             await influx.savePoints(options.influx, [pointLogs], "FINISHED");
             break;
@@ -126,13 +141,13 @@ const getDataForAllUrls = async(options) => {
             }
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
             await sleep(options.retryAfter * 60000);
-            var options_failed = {
-                influx: options.influx,
-                retryTimeRange: options.retryTimeRange,
-                urls: all_urls
-            };
+            
             try{
                 var failedUrls = await getFailedUrls(options_failed);
+                for (let i = 0; i < failedUrls.length; i++) {
+                    const pointStatus = influx.markStatus(failedUrls[i], 2, retries - 1);
+                    await influx.savePoints(options.influx, [pointStatus], failedUrls[i]);
+                }
             }
             catch(err){
                 const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
