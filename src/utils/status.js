@@ -10,6 +10,7 @@ const env = nunjucks.configure(`${__dirname}/views`, {
 })
 
 env.addGlobal('moment', moment);
+env.addGlobal('Date', Date);
 
 
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {

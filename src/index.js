@@ -237,7 +237,7 @@ const init = async(options) => {
                         },
                         null,
                         true,
-                        'Europe/London',
+                        process.env.TZ,
                         null,
                         true
                     );
@@ -328,7 +328,7 @@ const init = async(options) => {
                         },
                         null,
                         true,
-                        'Europe/London',
+                        process.env.TZ,
                         null,
                         true
                     );

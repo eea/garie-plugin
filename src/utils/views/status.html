@@ -112,13 +112,16 @@
                     <th scope="col" data-field="blank">
 
                     </th>
-                    <th scope="col" data-field="active-checks">
+                    <th scope="col" data-field="blank">
                         Start Time
                     </th>
-                    <th scope="col" data-field="failed-checks">
+                    <th scope="col" data-field="blank">
                         Total Running Time
                     </th>
-                    <th scope="col" data-field="failed-checks">
+                    <th scope="col" data-field="blank">
+                        End Time
+                    </th>
+                    <th scope="col" data-field="blank">
                         Successful Checks / Total
                     </th>
                     <th colspan="4" scope="colgroup">
@@ -137,6 +140,9 @@
                     <td>
                         {% set time = totalRunningTime %}
                         Run for {{ (time/ 3600) |int }}h {{ ((time % 3600) / 60) |round|int }}m {{ (time % 60) |round|int }}s
+                    </td>
+                    <td>
+                        {{ moment(Date.parse(startTime) + (totalRunningTime * 1000)).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
                        {{ countSuccess }} / {{ nrUrls }}
