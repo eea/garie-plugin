@@ -150,6 +150,7 @@ const getDataForAllUrls = async(options) => {
                 }
             }
             catch(err){
+                console.log(`Failed to get and save into influx failed urls. ${err}`);
                 const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
                 await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
                 console.log("Retry: " + retries + "/" + options.retryTimes);
