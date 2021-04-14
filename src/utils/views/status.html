@@ -22,6 +22,7 @@
     <br>
     <div class="table-responsive container">
         <h1> {{ defaultMessage }} </h1>
+        <p> *All times are in {{ timez }} time</p>
         <br>
         <br>
         <h2> {{ database }} </h2>
@@ -135,14 +136,14 @@
                         Last Performed
                     </th>
                     <td>
-                        {{ moment(startTime).format('MMMM Do YYYY, h:mm:ss a') }}
+                        {{ moment(Date.parse(startTime)).tz(timez).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
                         {% set time = totalRunningTime %}
                         Run for {{ (time/ 3600) |int }}h {{ ((time % 3600) / 60) |round|int }}m {{ (time % 60) |round|int }}s
                     </td>
                     <td>
-                        {{ moment(Date.parse(startTime) + (totalRunningTime * 1000)).format('MMMM Do YYYY, h:mm:ss a') }}
+                        {{ moment(Date.parse(startTime) + (totalRunningTime * 1000)).tz(timez).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
                        {{ countSuccess }} / {{ nrUrls }}

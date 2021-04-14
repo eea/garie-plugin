@@ -100,6 +100,8 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
 
 async function makeStatusTables(res, influx, database) {
   const obj = await makeStatusTablesHelper(influx, database);
+  const timez = process.env.TZ;
+  obj.timez = timez;
   return res.send(env.render('status.html', obj ));
 }
 
@@ -139,8 +141,8 @@ async function makeStatusTablesHelper(influx, database) {
   const idx = statusLogsQuery.findIndex(elem => elem.step === "START");
   const statusLogsRows = statusLogsQuery.slice(idx);
   const startTimestamp = statusLogsRows[0].time.getNanoTime();
-  const startTime = statusLogsRows[0].time.toISOString();
-  summaryStatus[database].lastRun = startTime.substr(0, 16).replace("T", " ");
+  const startTime = new Date(startTimestamp / TIME_IN_NANOS).toLocaleString({timeZone: process.env.TZ});
+  summaryStatus[database].lastRun = startTime;
 
   let waitingTimestamp = Date.now() * TIME_IN_NANOS;
   if (statusLogsRows.length >= 2) {
