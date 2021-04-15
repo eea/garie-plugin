@@ -16,7 +16,7 @@ env.addGlobal('Date', Date);
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {
     let runningChecks = [];
     
-    const queryChecks = `select * from status where state=\'1\' or state=\'2\' and time>=${startTimestamp} and retry=0`;
+    const queryChecks = `select * from status where (state=\'1\' or state=\'2\') and time>=${startTimestamp} and retry=0`;
     if (database === undefined) {
         runningChecks = await influx.query(queryChecks);
     } else {
@@ -43,9 +43,9 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
 
   let runningRetries = [];
   if (database === undefined) {
-      runningRetries = await influx.query(`select * from status where state=\'1\' or state=\'2\' and time > ${waitingTimestamp}`);
+      runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`);
   } else {
-      runningRetries = await influx.query(`select * from status where state=\'1\' or state=\'2\' and time > ${waitingTimestamp}`, { database });
+      runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`, { database });
   }
   for (let i = 0; i < statusLogsRows.length - 1; i++) {
     if (statusLogsRows[i].step.includes("RETRY")) {
