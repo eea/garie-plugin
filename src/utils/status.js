@@ -99,7 +99,12 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
 }
 
 async function makeStatusTables(res, influx, database) {
-  const obj = await makeStatusTablesHelper(influx, database);
+  let obj = {};
+  try {
+    obj = await makeStatusTablesHelper(influx, database);
+  } catch(err) {
+    console.log('Something wrong happened while trying to get data for status', err);
+  }
   const timez = process.env.TZ;
   obj.timez = timez;
   return res.send(env.render('status.html', obj ));
@@ -225,7 +230,11 @@ async function getSummaryStatus(influx, metrics) {
     } else {
         summaryStatus[metric.name].status = "No data yet"
     }
-    await makeStatusTablesHelper(influx, database);
+    try {
+      await makeStatusTablesHelper(influx, database);
+    } catch(err) {
+      console.log('Something wrong happened while trying to get data for status', err);
+    }
 
     summaryStatus[metric.name].alive = 'unknown';
     let host = "garie-";
