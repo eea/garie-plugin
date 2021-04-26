@@ -15,7 +15,6 @@ const { exec } = require('child_process');
 // can also be customized if added as fields in config.json;
 var MAX_AGE_OF_REPORT_FILES = 365;
 var MAX_AGE_OF_REPORT_VIDEOS = 100;
-var CRON_DELETE_OLD_REPORTS = ' 0 5 * * *';
 
 async function getDataForItem(item, retries){
 
@@ -203,48 +202,12 @@ const init = async(options) => {
             // delete old report files
             const pathToReports = path.join(settings.app_root, 'reports', settings.report_folder_name);
 
-            if (settings.config.MAX_AGE_OF_REPORT_FILES !== undefined) {
-                MAX_AGE_OF_REPORT_FILES = settings.config.MAX_AGE_OF_REPORT_FILES;
+            if (settings.config.plugins[settings.plugin_name].MAX_AGE_OF_REPORT_FILES !== undefined) {
+                MAX_AGE_OF_REPORT_FILES = settings.config.plugins[settings.plugin_name].MAX_AGE_OF_REPORT_FILES;
             }
 
-            if (settings.config.MAX_AGE_OF_REPORT_VIDEOS !== undefined) {
-                MAX_AGE_OF_REPORT_VIDEOS = settings.config.MAX_AGE_OF_REPORT_VIDEOS;
-            }
-
-            try {
-                if (settings.config.CRON_DELETE_OLD_REPORTS !== undefined) {
-                    CRON_DELETE_OLD_REPORTS = settings.config.CRON_DELETE_OLD_REPORTS;
-                }
-                const cron_config = CRON_DELETE_OLD_REPORTS;
-                if (cron_config) {
-                    new CronJob(
-                        cron_config,
-                        async() => {
-                            exec(`find ${pathToReports} -name "*.mp4" -mindepth 2 -mtime +${MAX_AGE_OF_REPORT_VIDEOS} -delete`, (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log("Can't execute command to delete old reports videos", err);
-                                } else {
-                                    console.log(`Successfully deleted reports videos older than ${MAX_AGE_OF_REPORT_FILES} days.`);
-                                }
-                            });
-
-                            exec(`find ${pathToReports} -mindepth 2 -maxdepth 2 -mtime +${MAX_AGE_OF_REPORT_FILES} -type d -exec rm -r {} +`, (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log("Can't execute command to delete old reports files", err);
-                                } else {
-                                    console.log(`Successfully deleted reports files older than ${MAX_AGE_OF_REPORT_FILES} days.`);
-                                }
-                            });
-                        },
-                        null,
-                        true,
-                        process.env.TZ,
-                        null,
-                        true
-                    );
-                }
-            } catch(err) {
-                console.log("CronJob not configured to delete old reports", err);
+            if (settings.config.plugins[settings.plugin_name].MAX_AGE_OF_REPORT_VIDEOS !== undefined) {
+                MAX_AGE_OF_REPORT_VIDEOS = settings.config.plugins[settings.plugin_name].MAX_AGE_OF_REPORT_VIDEOS;
             }
 
             const influx_obj = influx.init(settings.db_name)
@@ -318,6 +281,23 @@ const init = async(options) => {
                     new CronJob(
                         cron_config,
                         async () => {
+                            // delete old files and videos first;
+                            exec(`find ${pathToReports} -name "*.mp4" -mindepth 2 -mtime +${MAX_AGE_OF_REPORT_VIDEOS} -delete`, (err, stdout, stderr) => {
+                                if (err) {
+                                    console.log("Can't execute command to delete old reports videos", err);
+                                } else {
+                                    console.log(`Successfully deleted reports videos older than ${MAX_AGE_OF_REPORT_FILES} days.`);
+                                }
+                            });
+
+                            exec(`find ${pathToReports} -mindepth 2 -maxdepth 2 -mtime +${MAX_AGE_OF_REPORT_FILES} -type d -exec rm -r {} +`, (err, stdout, stderr) => {
+                                if (err) {
+                                    console.log("Can't execute command to delete old reports files", err);
+                                } else {
+                                    console.log(`Successfully deleted reports files older than ${MAX_AGE_OF_REPORT_FILES} days.`);
+                                }
+                            });
+
                             if (settings.config.plugins[settings.plugin_name].maxCpus) {
                                 //  Set number of CPUs
                                 const maxCpus = settings.config.plugins[settings.plugin_name].maxCpus
