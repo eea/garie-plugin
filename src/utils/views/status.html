@@ -19,6 +19,7 @@
 
 {% block content %}
 <body>
+
     <br>
     <div class="table-responsive container">
         <h1> {{ defaultMessage }} </h1>
@@ -55,7 +56,11 @@
                         Checks Currently Running
                     </th>
                     <td>
-                        {{ currentlyRunningChecksTable.runningChecks }} / {{ nrUrls }}
+                        {% if  currentlyRunningChecksTable.runningChecks > nrUrls %}
+                            {{ nrUrls }} / {{ nrUrls }}
+                        {% else %}
+                            {{ currentlyRunningChecksTable.runningChecks }} / {{ nrUrls }}
+                        {% endif %}
                     </td>
                     <td>
                         {{ currentlyRunningChecksTable.failedChecks }} / {{ nrUrls }}
@@ -175,11 +180,6 @@
     {% endif %}
     <br>
     <br>
-
-    
-    
-    
-
     
 </body>
 {% endblock %}
