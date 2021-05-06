@@ -191,7 +191,7 @@ const getDataForAllUrls = async(options) => {
             else {
                 const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
                 try {
-                    return influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
+                    await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
                 } catch(err) {
                     console.log(`Could not add step 'RETRY ${retries}' into influx.`, err);
                 }
