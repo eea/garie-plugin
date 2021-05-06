@@ -159,10 +159,18 @@
                         {{ moment(Date.parse(startTime) + (totalRunningTime * 1000)).tz(timez).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
-                       {{ countSuccess }} / {{ nrUrls }}
+                        {% if countSuccess > nrUrls %}
+                            {{ nrUrls }} / {{ nrUrls }}
+                        {% else %}
+                            {{ countSuccess }} / {{ nrUrls }}
+                        {% endif %}
                     </td>
                     <td>
-                        {{ nrUrls - countSuccess }} / {{ nrUrls }}
+                        {% if countSuccess > nrUrls %}
+                            0 / {{ nrUrls }}
+                        {% else %}
+                            {{ nrUrls - countSuccess }} / {{ nrUrls }}
+                        {% endif %}
                     </td>
             </tbody>
         </table>
