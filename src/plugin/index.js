@@ -3,13 +3,13 @@ const reportDir = require('../utils/helpers').reportDir;
 const plugin_getData = async (item) => {
     return new Promise(async (resolve, reject) => {
         try {
-            var options = {
+            const options = {
                 url_settings : item.url_settings,
                 reportDir : reportDir ({ url: item.url_settings.url, report_folder_name: item.report_folder_name, app_root: item.app_root }),
                 influx: item.influx_obj
             }
 
-            var data = await item.getData(options);
+            const data = await item.getData(options);
 
             resolve(data)
         } catch (err) {

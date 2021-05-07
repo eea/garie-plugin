@@ -70,7 +70,7 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
   for (let row of runningRetries) {
     if (row.state == 1 && row.retry != 0) {
       if (retries[row.retry - 1] === undefined) {
-        console.log(`Can't mark success or fail at retry nr ${row.retry} in retries of length: ${retries.length}.`);
+        console.log(`Can't mark success at retry nr ${row.retry} in retries of length: ${retries.length}.`);
         continue;
       }
       if (retries[row.retry - 1].success === undefined) {
@@ -80,6 +80,10 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       }
       
     } else if(row.state == 2 && row.retry != 0) {
+      if (retries[row.retry - 1] === undefined) {
+        console.log(`Can't mark fail at retry nr ${row.retry} in retries of length: ${retries.length}.`);
+        continue;
+      }
       if (retries[row.retry - 1].fail === undefined) {
         retries[row.retry - 1].fail = 1;
       } else {

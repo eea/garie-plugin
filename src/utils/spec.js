@@ -12,17 +12,17 @@ const getFile = async (options) => {
 
 describe('utils', () => {
     it('test the helper functions', async () => {
-        var pathname = utils.helpers.pathNameFromUrl('http://www.test.com')
+        const pathname = utils.helpers.pathNameFromUrl('http://www.test.com')
         expect(pathname).toEqual('www.test.com');
 
-        var options = {
+        let options = {
             plugin_name : 'test_plugin',
             report_folder_name: 'test_plugin_reports',
             url : 'http://www.test.com',
             app_root : '/tmp/test_reports',
             fileName : 'test.txt'
         };
-        var reportDir = utils.helpers.reportDir(options);
+        const reportDir = utils.helpers.reportDir(options);
         expect(reportDir).toEqual('/tmp/test_reports/reports/test_plugin_reports/www.test.com');
 
         fs.ensureDirSync(reportDir);

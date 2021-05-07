@@ -47,21 +47,21 @@ const mock_getMeasurement_custom = async (item, data) => {
 describe('plugin', () => {
     describe('plugin_getData', () => {
         it('use a specific getData method to retrieve data for a specific url', async () => {
-            var result = await plugin_getData(mock_item);
+            const result = await plugin_getData(mock_item);
             expect(result).toEqual({"test_result":1});
 
         });
     });
     describe('plugin_getMeasurement', () => {
         it('build a simple measurement with the built in method', async () => {
-            var result = await plugin_getData(mock_item);
-            var measurement = await plugin_getMeasurement(mock_item, result);
+            const result = await plugin_getData(mock_item);
+            const measurement = await plugin_getMeasurement(mock_item, result);
             expect(measurement).toEqual([{"fields": {"value": 1}, "measurement": "test_result", "tags": {"url": "http://www.test.com"}}]);
         });
         it('build a measurement with a custom method', async () => {
-            var result = await plugin_getData(mock_item);
+            const result = await plugin_getData(mock_item);
             mock_item.getMeasurement = mock_getMeasurement_custom;
-            var measurement = await plugin_getMeasurement(mock_item, result);
+            const measurement = await plugin_getMeasurement(mock_item, result);
             expect(measurement).toEqual([{"fields": {"value": 1, "value2": 2}, "measurement": "test_result", "tags": {"url": "http://www.test.com"}}]);
         });
     });

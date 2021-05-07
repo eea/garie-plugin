@@ -1,6 +1,6 @@
 const { saveData, create_db } = require('./index');
 
-var db = {
+let db = {
     options:{database: "test_db"},
     getDatabaseNames: jest.fn(),
     createDatabase: jest.fn(),

@@ -25,7 +25,7 @@ const createApp = (settings, influx_obj) => {
   });
   
 
-    if (settings.onDemand) {
+  if (settings.onDemand) {
     const scanQueue = {};
 
     const launchScanOnDemand = async (url, scan) => {
@@ -51,7 +51,7 @@ const createApp = (settings, influx_obj) => {
         console.log(`Launching scan on demand for ${url}`);
 
         const data = await plugin.plugin_getData(item);
-        var isSuccess = true;
+        let isSuccess = true;
         let measurement = [];
 
         if (data !== null) {
@@ -132,7 +132,7 @@ const createApp = (settings, influx_obj) => {
 
     app.get('/health', async (req, res) => {
       try {
-        var retries = 0;
+        let retries = 0;
         while(true){
           try{
             await influx.list_db(influx_obj);
