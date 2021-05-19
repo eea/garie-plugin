@@ -82,7 +82,7 @@ function tryMultipleTimes(f, err_msg, count) {
             try {
                 await f();
                 clearInterval(interval);
-                console.log(`At Try Multiple Times success: ${count}`, interval);
+                console.log(`At Try Multiple Times success: ${count}`);
                 resolve();
                 return;
             } catch (err) {
