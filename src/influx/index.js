@@ -41,10 +41,42 @@ const create_db = async (influxdb) => {
     }
 }
 
+
+
+function tryMultipleTimes(f, reject_msg, count) {
+    count = count || 5;
+    reject_msg = reject_msg || "Something went wrong when writing into influxdb.";
+    return new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+            try {
+                const res = await f();
+                clearInterval(interval);
+                console.log(`At Try Multiple Times success: ${count}`);
+                resolve(res);
+                return;
+            } catch (err) {
+                count--;
+                if (count <= 0) {
+                    clearInterval(interval);
+                    reject(reject_msg, err);
+                    return;
+                }
+                console.log(`At Try Multiple Times fail: ${count}`, interval, err);
+            }
+        }, 1000);
+    })
+
+}
+
+
 const saveData = async (influxdb, url, measurement) => {
     try {
 //TODO: check why writePoints fails when too many plugins try to write simultaneously to influx
-        const result = await influxdb.writePoints(measurement);
+        const result = await tryMultipleTimes( async () => {
+                return influxdb.writePoints(measurement);
+            },
+            `Failed to save ${url} data into ${measurement} at retry.`
+        );
         console.log(`Successfully saved ${influxdb.config.database} data for ${url}`);
         return result;
     } catch (err) {
@@ -55,7 +87,12 @@ const saveData = async (influxdb, url, measurement) => {
 
 const savePoints = async (influxdb, points, option) => {
     try {
-        const result = await influxdb.writePoints(points);
+        const result = await tryMultipleTimes(
+            async () => {
+                return influxdb.writePoints(points);
+            },
+            `Failed to mark ${option} into ${points[0].measurement} at retry`,
+        );
         console.log(`Successfully saved data for ${option} into ${points[0].measurement}.`);
         return result;
     } catch (err) {

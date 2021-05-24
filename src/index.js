@@ -74,45 +74,13 @@ async function getFailedUrls(settings){
 }
 
 
-function tryMultipleTimes(f, err_msg, count) {
-    count = count || 5;
-    err_msg = err_msg || "Something went wrong when writing into influxdb.";
-    return new Promise((resolve, reject) => {
-        const interval = setInterval(async () => {
-            try {
-                await f();
-                clearInterval(interval);
-                console.log(`At Try Multiple Times success: ${count}`);
-                resolve();
-                return;
-            } catch (err) {
-                count--;
-                if (count <= 0) {
-                    clearInterval(interval);
-                    console.log("ERROR: Can not add step in status-logs.");
-                    resolve();
-                    return;
-                }
-                console.log(`At Try Multiple Times fail: ${count}`, interval);
-                console.log(err_msg, err);
-            }
-        }, 100);
-    })
-
-}
-
-
 const getDataForAllUrls = async(options) => {
     let items_to_process = options.items;    
     const all_urls = items_to_process.map(url => url.url_settings.url);
     try{
         const pointStatusLogs = influx.markStatusLogs("START", Date.now());
         const pointUrls = influx.markAllUrls(all_urls.length);
-        await tryMultipleTimes(async () => {
-                return influx.savePoints(options.influx, [pointStatusLogs, pointUrls], "START");
-            },
-            "Couldn't add step 'START' into influx."
-        ); 
+                await influx.savePoints(options.influx, [pointStatusLogs, pointUrls], "START");
     } catch(err) {
         console.log(`Failed to START and add number of all urls ${err}`);
     }
@@ -161,21 +129,21 @@ const getDataForAllUrls = async(options) => {
             }
 
             const pointLogs = influx.markStatusLogs("FINISHED", Date.now());
-            await tryMultipleTimes(async () => {
-                    return influx.savePoints(options.influx, [pointLogs], "FINISHED");
-                },
-                "Failed to add step 'FINISHED' into influx."
-            );
+            try {
+                await influx.savePoints(options.influx, [pointLogs], "FINISHED");
+            } catch(err) {
+                console.log('Failed to add step FINISH', err);
+            }
             break;
         } else {
             retries++;
             if (retries <= 1) {
                 const pointStatusLogs = influx.markStatusLogs("WAITING", Date.now());
-                await tryMultipleTimes(async () => {
-                        return influx.savePoints(options.influx, [pointStatusLogs], "WAITING");
-                    },
-                    "Couldn't add step 'WAITING' into influx."
-                );
+                try {
+                    await influx.savePoints(options.influx, [pointStatusLogs], "WAITING");
+                } catch(err) {
+                    console.log('Failed to add step WAITING', err);
+                }
                 
             }
             console.log('Wait for ' + options.retryAfter+ ' minutes, then check for failed tasks');
@@ -191,11 +159,11 @@ const getDataForAllUrls = async(options) => {
             catch(err){
                 console.log(`Failed to get and save into influx failed urls. ${err}`);
                 const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
-                await tryMultipleTimes(async () => {
-                        return influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
-                    },
-                    `Couldn't add step 'RETRY ${retries}' into influx.`
-                );
+                try {
+                    await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
+                } catch(err) {
+                    console.log(`Couldn't add step 'RETRY ${retries}' into influx.`, err);
+                }
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log("Failed retrieving failed urls");
                 skip_retry = true;
@@ -203,27 +171,27 @@ const getDataForAllUrls = async(options) => {
             }
             if (failedUrls.length === 0){
                 const pointStatusLogsFirst = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
-                await tryMultipleTimes(async () => {
-                        return influx.savePoints(options.influx, [pointStatusLogsFirst], `RETRY ${retries}`);
-                    },
-                    `Failed to add step 'RETRY ${retries}' into influx.`
-                );
+                try {
+                    await influx.savePoints(options.influx, [pointStatusLogsFirst], `RETRY ${retries}`);
+                } catch(err) {
+                    console.log(`Failed to add step 'RETRY ${retries}' into influx.`, err);
+                }
                 console.log("Retry: " + retries + "/" + options.retryTimes);
                 console.log('All tasks were executed successfully');
                 const pointStatusLogsSecond = influx.markStatusLogs("FINISHED", Date.now());
-                await tryMultipleTimes(async () => {
-                        return influx.savePoints(options.influx, [pointStatusLogsSecond], "FINISHED");
-                    },
-                    "Couldn't add step 'FINISHED' into influx."
-                );
+                try {
+                    await influx.savePoints(options.influx, [pointStatusLogsSecond], "FINISHED");
+                } catch(err) {
+                    console.log("Couldn't add step 'FINISHED' into influx.", err)
+                }
                 break;
             } else {
                 const pointStatusLogs = influx.markStatusLogs(`RETRY ${retries}`, Date.now());
-                await tryMultipleTimes(async () => {
-                        return influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
-                    },
-                    `Could not add step 'RETRY ${retries}' into influx.`
-                );
+                try {
+                    await influx.savePoints(options.influx, [pointStatusLogs], `RETRY ${retries}`);
+                } catch(err) {
+                    console.log(`Could not add step 'RETRY ${retries}' into influx.`, err);
+                }
                 console.log('There are ' + failedUrls.length +' failed tasks:');
                 console.log(failedUrls);
                 console.log("Retry: " + retries + "/" + options.retryTimes);
