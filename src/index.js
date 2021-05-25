@@ -241,8 +241,7 @@ const init = async(options) => {
 
             // delete old report files
             const pathToReports = path.join(settings.app_root, 'reports', settings.report_folder_name);
-
-            const influx_obj = influx.init(settings.db_name)
+            const influx_obj = influx.init(settings.db_name, settings)
             let retries = 0;
             while(true){
                 try{

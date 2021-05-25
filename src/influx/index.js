@@ -1,7 +1,8 @@
 const Influx = require('influx');
+let config = {};
 
-function init(db_name){
-
+function init(db_name, settings){
+    config = settings.config;
     let influxdb = new Influx.InfluxDB({
         host: process.env.HOST || process.env.INFLUX_HOST || 'localhost',
         port: process.env.INFLUX_PORT || 8086,
@@ -43,15 +44,15 @@ const create_db = async (influxdb) => {
 
 
 
-function tryMultipleTimes(f, reject_msg, count) {
-    count = count || 5;
+function tryMultipleTimes(f, reject_msg, option) {
+    count = config.resubmit_infux_count_times || 10;
     reject_msg = reject_msg || "Something went wrong when writing into influxdb.";
     return new Promise((resolve, reject) => {
         const interval = setInterval(async () => {
             try {
                 const res = await f();
                 clearInterval(interval);
-                console.log(`At Try Multiple Times success: ${count}`);
+                console.log(`At Try Multiple Times success: ${count}, ${option}`);
                 resolve(res);
                 return;
             } catch (err) {
@@ -61,11 +62,10 @@ function tryMultipleTimes(f, reject_msg, count) {
                     reject(reject_msg, err);
                     return;
                 }
-                console.log(`At Try Multiple Times fail: ${count}`, interval, err);
+                console.log(`At Try Multiple Times fail: ${count}, ${option}`, interval, err);
             }
-        }, 1000);
+        }, (config.resubmit_influx_delay_seconds || 5) * 1000);
     })
-
 }
 
 
@@ -75,7 +75,8 @@ const saveData = async (influxdb, url, measurement) => {
         const result = await tryMultipleTimes( async () => {
                 return influxdb.writePoints(measurement);
             },
-            `Failed to save ${url} data into ${measurement} at retry.`
+            `Failed to save ${url} data into ${measurement} at retry.`,
+            url
         );
         console.log(`Successfully saved ${influxdb.config.database} data for ${url}`);
         return result;
@@ -92,6 +93,7 @@ const savePoints = async (influxdb, points, option) => {
                 return influxdb.writePoints(points);
             },
             `Failed to mark ${option} into ${points[0].measurement} at retry`,
+            option
         );
         console.log(`Successfully saved data for ${option} into ${points[0].measurement}.`);
         return result;
