@@ -135,6 +135,20 @@ const getNewestFile = (options) => {
     }
 };
 
+// needed in checkmk-plugin
+const getLastEntry = async (influxdb, database, measurement, field) => {
+    const query = `select last(${field}) from ${measurement}`;
+    let result = -1;
+    try {
+        result = await influxdb.query(query, {database});
+    } catch (err) {
+        console.log (`Could not get last entry from ${measurement}, ${database}`, err);
+    }
+    if (result.length > 0) {
+        return result;
+    }
+}
+
 
 module.exports = {
     reportDir,
@@ -143,5 +157,6 @@ module.exports = {
     newestDirFull,
     executeScript,
     getNewestFile,
-    pathNameFromUrl
+    pathNameFromUrl,
+    getLastEntry
 }

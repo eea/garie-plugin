@@ -345,7 +345,7 @@ const init = async(options) => {
                     );
                 }
                 const app = createApp(settings, influx_obj);
-                resolve({ app });
+                resolve({ app, influx_obj });
             } catch (err){
                 console.log("Cron is not configured for plugin", err);
                 reject("Cron is not configured for plugin");
@@ -359,5 +359,6 @@ const init = async(options) => {
 
 module.exports = {
     init,
-    utils
+    utils,
+    influx
 };
