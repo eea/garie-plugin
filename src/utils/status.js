@@ -196,6 +196,14 @@ async function makeStatusTablesHelper(influx, database) {
     }
     tablesToShow.finish = true;
     summaryStatus[database].success = countSuccess;
+
+    if (!countSuccess || !nrUrls || !currentlyRunningRetriesTable || !currentlyRunningRetriesTable.retries || !currentlyRunningRetriesTable.retries.size
+	    || countSuccess > nrUrls
+	    || currentlyRunningRetriesTable.retries[currentlyRunningRetriesTable.retries.length - 1].failedUrls.size != nrUrls - countSuccess) {
+      const defaultMessage = `Plugin ${database} might have some failures. Please rerun it.`;
+      return {defaultMessage, nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database};
+    }
+
     return {nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database };
   }
   return {defaultMessage, database};

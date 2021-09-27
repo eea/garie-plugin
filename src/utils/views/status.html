@@ -22,7 +22,7 @@
 
     <br>
     <div class="table-responsive container">
-        <h1> {{ defaultMessage }} </h1>
+        <h2 style="color:#801109;"> {{ defaultMessage }} </h2>
         <p> *All times are in {{ timez }} time</p>
         <br>
         <br>
@@ -159,18 +159,10 @@
                         {{ moment(Date.parse(startTime) + (totalRunningTime * 1000)).tz(timez).format('MMMM Do YYYY, h:mm:ss a') }}
                     </td>
                     <td>
-                        {% if countSuccess > nrUrls %}
-                            {{ nrUrls }} / {{ nrUrls }}
-                        {% else %}
-                            {{ countSuccess }} / {{ nrUrls }}
-                        {% endif %}
+                        {{ countSuccess }} / {{ nrUrls }}
                     </td>
                     <td>
-                        {% if countSuccess > nrUrls %}
-                            0 / {{ nrUrls }}
-                        {% else %}
-                            {{ nrUrls - countSuccess }} / {{ nrUrls }}
-                        {% endif %}
+                        {{ nrUrls - countSuccess }} / {{ nrUrls }}
                     </td>
             </tbody>
         </table>
