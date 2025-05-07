@@ -150,7 +150,7 @@ const getLastEntry = async (influxdb, database, measurement, field) => {
     }
 }
 
-function checkTcp(host, port = 3000, timeout = 3000) {
+function checkTcpPort(host, port = 3000, timeout = 3000) {
     return new Promise((resolve) => {
         const socket = net.createConnection({ host, port, timeout }, () => {
             socket.destroy();
