@@ -5,22 +5,23 @@ const isEmpty = require('lodash.isempty');
 const child_process = require('child_process');
 const dateFormat = require('dateformat');
 const crypto = require('crypto');
+const net = require('net');
 
 function pathNameFromUrl(url) {
-  const parsedUrl = urlParser.parse(url),
-    pathSegments = parsedUrl.pathname.split('/');
+    const parsedUrl = urlParser.parse(url),
+        pathSegments = parsedUrl.pathname.split('/');
 
-  pathSegments.unshift(parsedUrl.hostname);
+    pathSegments.unshift(parsedUrl.hostname);
 
-  if (!isEmpty(parsedUrl.search)) {
-    const md5 = crypto.createHash('md5'),
-      hash = md5
-        .update(parsedUrl.search)
-        .digest('hex')
-        .substring(0, 8);
-    pathSegments.push('query-' + hash);
-  }
-  return pathSegments.filter(Boolean).join('-');
+    if (!isEmpty(parsedUrl.search)) {
+        const md5 = crypto.createHash('md5'),
+            hash = md5
+                .update(parsedUrl.search)
+                .digest('hex')
+                .substring(0, 8);
+        pathSegments.push('query-' + hash);
+    }
+    return pathSegments.filter(Boolean).join('-');
 }
 
 function reportDir(options) {
@@ -47,7 +48,7 @@ function newestDirBase(options) {
     let folders = fs.readdirSync(dir);
 
     // Filter out accidental non-date folders before finding newest
-    folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0,10))));
+    folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0, 10))));
     const newestFolder = folders[folders.length - 1];
 
     return { dir, newestFolder };
@@ -78,18 +79,18 @@ const executeScript = async (options) => {
             const { callback } = options;
             const { timeout = 0 } = options;
 
-            const command = [ script, url, reportDir ].concat(params);
+            const command = [script, url, reportDir].concat(params);
 
             const child = child_process.spawn('bash', command);
 
             child.on('exit', async (code) => {
                 console.log("Exit code from script:", code);
-                if ((code !== null) && (code !== 124)){
-                    try{
-                        const data = await callback({url: url, reportDir: reportDir});
+                if ((code !== null) && (code !== 124)) {
+                    try {
+                        const data = await callback({ url: url, reportDir: reportDir });
                         resolve(data);
                     }
-                    catch(err){
+                    catch (err) {
                         reject(`Failed to get file ${err}`);
 
                     }
@@ -99,10 +100,10 @@ const executeScript = async (options) => {
                     reject(`Timeout while trying to get data for ${url}`);
                 }
             });
-            if (timeout > 0){
-                setTimeout(function(){
-                        child.kill(9);
-                    }, timeout * 1000);
+            if (timeout > 0) {
+                setTimeout(function () {
+                    child.kill(9);
+                }, timeout * 1000);
             }
             child.stdout.pipe(process.stdout);
             child.stderr.pipe(process.stderr);
@@ -122,7 +123,7 @@ const getNewestFile = (options) => {
         let folders = fs.readdirSync(reportDir);
 
         // Filter out accidental non-date folders before finding newest
-        folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0,10))));
+        folders = folders.filter(folder => !isNaN(Date.parse(folder.slice(0, 10))));
         const newestFolder = folders[folders.length - 1];
 
         const newestFile = fs.readFileSync(path.join(reportDir, newestFolder, fileName));
@@ -140,13 +141,28 @@ const getLastEntry = async (influxdb, database, measurement, field) => {
     const query = `select last(${field}) from ${measurement}`;
     let result = -1;
     try {
-        result = await influxdb.query(query, {database});
+        result = await influxdb.query(query, { database });
     } catch (err) {
-        console.log (`Could not get last entry from ${measurement}, ${database}`, err);
+        console.log(`Could not get last entry from ${measurement}, ${database}`, err);
     }
     if (result.length > 0) {
         return result;
     }
+}
+
+function checkTcp(host, port = 3000, timeout = 3000) {
+    return new Promise((resolve) => {
+        const socket = net.createConnection({ host, port, timeout }, () => {
+            socket.destroy();
+            resolve({ alive: true });
+        });
+
+        socket.on('error', () => resolve({ alive: false }));
+        socket.on('timeout', () => {
+            socket.destroy();
+            resolve({ alive: false });
+        });
+    });
 }
 
 
@@ -158,5 +174,6 @@ module.exports = {
     executeScript,
     getNewestFile,
     pathNameFromUrl,
-    getLastEntry
+    getLastEntry,
+    checkTcpPort
 }

@@ -1,8 +1,8 @@
 const TIME_IN_SECONDS = 1000000000;
 const TIME_IN_NANOS = 1000000;
 const nunjucks = require('nunjucks');
-const ping = require('ping');
 const moment = require('moment');
+const { checkTcpPort } = require('./helpers');
 
 const env = nunjucks.configure(`${__dirname}/views`, {
   autoescape: true,
@@ -12,47 +12,46 @@ const env = nunjucks.configure(`${__dirname}/views`, {
 env.addGlobal('moment', moment);
 env.addGlobal('Date', Date);
 
-
 async function getCurrentChecks(influx, waitingTimestamp, startTimestamp, database) {
-    let runningChecks = [];
-    
-    const queryChecks = `select * from status where (state=\'1\' or state=\'2\') and time>=${startTimestamp} and retry=0`;
-    if (database === undefined) {
-        runningChecks = await influx.query(queryChecks);
-    } else {
-        runningChecks = await influx.query(queryChecks, { database });
-    }
-    const failedChecks = runningChecks.filter((elem) => elem.state === '2');
-    const duration = (waitingTimestamp - startTimestamp) / TIME_IN_SECONDS;
+  let runningChecks = [];
 
-    const currentChecks = {
-        runningChecks: runningChecks.length,
-        failedChecks: failedChecks.length,
-        startTime: startTimestamp,
-        duration: duration.toFixed(2)
-    } 
-    return currentChecks;
+  const queryChecks = `select * from status where (state=\'1\' or state=\'2\') and time>=${startTimestamp} and retry=0`;
+  if (database === undefined) {
+    runningChecks = await influx.query(queryChecks);
+  } else {
+    runningChecks = await influx.query(queryChecks, { database });
+  }
+  const failedChecks = runningChecks.filter((elem) => elem.state === '2');
+  const duration = (waitingTimestamp - startTimestamp) / TIME_IN_SECONDS;
+
+  const currentChecks = {
+    runningChecks: runningChecks.length,
+    failedChecks: failedChecks.length,
+    startTime: startTimestamp,
+    duration: duration.toFixed(2)
+  }
+  return currentChecks;
 }
 
 
 async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, database) {
   const retries = [];
   if (statusLogsRows.length === 0) {
-    return {retries};
+    return { retries };
   }
 
   let runningRetries = [];
   if (database === undefined) {
-      runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`);
+    runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`);
   } else {
-      runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`, { database });
+    runningRetries = await influx.query(`select * from status where (state=\'1\' or state=\'2\') and time > ${waitingTimestamp}`, { database });
   }
   for (let i = 0; i < statusLogsRows.length - 1; i++) {
     if (statusLogsRows[i].step.includes("RETRY")) {
       retries.push({
         duration: ((statusLogsRows[i + 1].time.getNanoTime() - statusLogsRows[i].time.getNanoTime()) / TIME_IN_SECONDS).toFixed(2),
         success: 0,
-        fail : 0,
+        fail: 0,
         failedUrls: new Set()
       });
     }
@@ -62,11 +61,11 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
     retries.push({
       duration: (Date.now() * TIME_IN_NANOS - statusLogsRows[statusLogsRows.length - 1].time.getNanoTime()) / TIME_IN_SECONDS,
       success: 0,
-      fail : 0,
+      fail: 0,
       failedUrls: new Set()
     })
   }
-  
+
   for (let row of runningRetries) {
     if (row.state == 1 && row.retry != 0) {
       if (retries[row.retry - 1] === undefined) {
@@ -78,8 +77,8 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       } else {
         retries[row.retry - 1].success++;
       }
-      
-    } else if(row.state == 2 && row.retry != 0) {
+
+    } else if (row.state == 2 && row.retry != 0) {
       if (retries[row.retry - 1] === undefined) {
         console.log(`Can't mark fail at retry nr ${row.retry} in retries of length: ${retries.length}.`);
         continue;
@@ -94,7 +93,7 @@ async function getCurrentRetries(influx, waitingTimestamp, statusLogsRows, datab
       }
     }
 
-    
+
   }
   const currentRetries = {
     retries
@@ -106,17 +105,17 @@ async function makeStatusTables(res, influx, database) {
   let obj = {};
   try {
     obj = await makeStatusTablesHelper(influx, database);
-  } catch(err) {
+  } catch (err) {
     console.log('Something wrong happened while trying to get data for status', err);
   }
   const timez = process.env.TZ;
   obj.timez = timez;
-  return res.send(env.render('status.html', obj ));
+  return res.send(env.render('status.html', obj));
 }
 
 async function makeStatusTablesHelper(influx, database) {
   const defaultMessage = "Plugin has not started yet.";
-  summaryStatus[database] = {success : 0, allUrls : 0, lastRun: '-'};
+  summaryStatus[database] = { success: 0, allUrls: 0, lastRun: '-' };
 
   let tablesToShow = {
     first: false,
@@ -128,18 +127,18 @@ async function makeStatusTablesHelper(influx, database) {
   let urlsQuery = [];
 
   if (database === undefined) {
-      statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc');
-      urlsQuery = await influx.query('select * from nrUrls');
+    statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc');
+    urlsQuery = await influx.query('select * from nrUrls');
   } else {
-      statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc', { database });
-      urlsQuery = await influx.query('select * from nrUrls', {database});
+    statusLogsQuery = await influx.query('select last(*) from "status-logs" group by step order by time asc', { database });
+    urlsQuery = await influx.query('select * from nrUrls', { database });
   }
 
   if (urlsQuery.length > 0) {
     summaryStatus[database].allUrls = urlsQuery[urlsQuery.length - 1].allUrls;
   }
   const nrUrls = summaryStatus[database].allUrls;
-  
+
   if (statusLogsQuery.length === 0) {
     return { defaultMessage, database };
   }
@@ -150,7 +149,7 @@ async function makeStatusTablesHelper(influx, database) {
   const idx = statusLogsQuery.findIndex(elem => elem.step === "START");
   const statusLogsRows = statusLogsQuery.slice(idx);
   const startTimestamp = statusLogsRows[0].time.getNanoTime();
-  const startTime = new Date(startTimestamp / TIME_IN_NANOS).toLocaleString({timeZone: process.env.TZ});
+  const startTime = new Date(startTimestamp / TIME_IN_NANOS).toLocaleString({ timeZone: process.env.TZ });
   summaryStatus[database].lastRun = startTime;
 
   let waitingTimestamp = Date.now() * TIME_IN_NANOS;
@@ -162,34 +161,34 @@ async function makeStatusTablesHelper(influx, database) {
   const currentlyRunningRetriesTable = await getCurrentRetries(influx, waitingTimestamp, statusLogsRows.slice(2), database);
 
   if (statusLogsRows[statusLogsRows.length - 1].step === "START" ||
-      statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
+    statusLogsRows[statusLogsRows.length - 1].step === "WAITING") {
 
     tablesToShow.first = true;
-    return {nrUrls, currentlyRunningChecksTable, tablesToShow, database };
-      
-  } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY") && 
+    return { nrUrls, currentlyRunningChecksTable, tablesToShow, database };
+
+  } else if (statusLogsRows[statusLogsRows.length - 1].step.includes("RETRY") &&
     currentlyRunningRetriesTable.retries.length > 0 && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
-    
+
     tablesToShow.first = true;
     tablesToShow.retries = true;
     return { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, tablesToShow, database };
 
   } else if (statusLogsRows[statusLogsRows.length - 1].step === "FINISHED") {
-    
+
     const finishTime = statusLogsRows[statusLogsRows.length - 1].time.getNanoTime();
     const totalRunningTime = ((finishTime - startTimestamp) / TIME_IN_SECONDS).toFixed(2);
-    
+
 
     let successful = [];
     if (database === undefined) {
-      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`);      
+      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`);
     } else {
-      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`, { database });      
+      successful = await influx.query(`select * from success where time>=${startTimestamp} and time<=${finishTime}`, { database });
     }
 
     const countSuccess = successful.length;
     summaryStatus[database].success = countSuccess;
-    
+
     tablesToShow.first = true;
     if (currentlyRunningRetriesTable.retries.length > 0 && currentlyRunningRetriesTable.retries[0].duration !== '0.00') {
       tablesToShow.retries = true;
@@ -197,21 +196,21 @@ async function makeStatusTablesHelper(influx, database) {
     tablesToShow.finish = true;
     summaryStatus[database].success = countSuccess;
 
-    if ( !currentlyRunningRetriesTable || !currentlyRunningRetriesTable.retries || !currentlyRunningRetriesTable.retries.length
-	    || currentlyRunningRetriesTable.retries[currentlyRunningRetriesTable.retries.length - 1].failedUrls.size != nrUrls - countSuccess) {
+    if (!currentlyRunningRetriesTable || !currentlyRunningRetriesTable.retries || !currentlyRunningRetriesTable.retries.length
+      || currentlyRunningRetriesTable.retries[currentlyRunningRetriesTable.retries.length - 1].failedUrls.size != nrUrls - countSuccess) {
       const defaultMessage = `Plugin ${database} might have some failures. Please rerun it.`;
-      return {defaultMessage, nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database};
+      return { defaultMessage, nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database };
     }
 
-    return {nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database };
+    return { nrUrls, currentlyRunningChecksTable, currentlyRunningRetriesTable, startTime, totalRunningTime, countSuccess, tablesToShow, database };
   }
-  return {defaultMessage, database};
+  return { defaultMessage, database };
 }
 
 let summaryStatus = {};
 async function getSummaryStatus(influx, metrics) {
 
-  for (let metric of metrics){
+  for (let metric of metrics) {
 
     if (summaryStatus[metric.name] === undefined) {
       summaryStatus[metric.name] = {};
@@ -239,11 +238,11 @@ async function getSummaryStatus(influx, metrics) {
         summaryStatus[metric.name].status = "IN PROGRESS";
       }
     } else {
-        summaryStatus[metric.name].status = "No data yet"
+      summaryStatus[metric.name].status = "No data yet"
     }
     try {
       await makeStatusTablesHelper(influx, database);
-    } catch(err) {
+    } catch (err) {
       console.log('Something wrong happened while trying to get data for status', err);
     }
 
@@ -255,7 +254,7 @@ async function getSummaryStatus(influx, metrics) {
     } else {
       host += metric.database;
     }
-    const alive = await ping.promise.probe(host);
+    const alive = await checkTcpPort(host);
 
     if (alive.alive === false) {
       summaryStatus[metric.name].alive = 'DOWN';
