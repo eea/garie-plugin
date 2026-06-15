@@ -1,19 +1,27 @@
 const Influx = require('influx');
+const http = require('http');
 let config = {};
 
 function init(db_name, settings){
     config = settings.config;
+    // InfluxDB 2.x v1 compatibility API accepts token as the password.
+    // If INFLUX_TOKEN is set, use it as password. Username must be non-empty
+    // for the v1 compat API (value is ignored, but empty string causes 401).
+    // Falls back to INFLUX_USERNAME/INFLUX_PASSWORD for backward compat with 1.x.
+    const token = process.env.INFLUX_TOKEN;
+    const username = token ? 'token' : (process.env.INFLUX_USERNAME || '');
+    const password = token || process.env.INFLUX_PASSWORD || '';
     let influxdb = new Influx.InfluxDB({
         host: process.env.HOST || process.env.INFLUX_HOST || 'localhost',
         port: process.env.INFLUX_PORT || 8086,
         database: db_name,
-        username: process.env.INFLUX_USERNAME || '',
-        password: process.env.INFLUX_PASSWORD || '',
+        username: username,
+        password: password,
     });
 
     influxdb.config = {}
     influxdb.config.database = db_name
-    
+
     return influxdb
 }
 
@@ -27,12 +35,78 @@ const list_db = async (influxdb) => {
     }
 }
 
+// Create a bucket via InfluxDB v2 API. Required for InfluxDB 2.x since
+// the v1-compat CREATE DATABASE command is not implemented in 2.x.
+// Falls back to v1 createDatabase() for backward compat with InfluxDB 1.x.
+const _createBucketV2 = (influxdb) => {
+    const dbName = influxdb.config.database;
+    const org = process.env.INFLUX_ORG || 'garie';
+    const token = process.env.INFLUX_TOKEN || process.env.INFLUX_PASSWORD || '';
+    const host = process.env.HOST || process.env.INFLUX_HOST || 'localhost';
+    const port = process.env.INFLUX_PORT || 8086;
+
+    return new Promise((resolve, reject) => {
+        // Step 1: get org ID
+        http.get(`http://${host}:${port}/api/v2/orgs?org=${encodeURIComponent(org)}`, {
+            headers: { 'Authorization': `Token ${token}` }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (!parsed.orgs || parsed.orgs.length === 0) {
+                        return reject(new Error(`Org '${org}' not found`));
+                    }
+                    const orgID = parsed.orgs[0].id;
+
+                    // Step 2: create bucket
+                    const body = JSON.stringify({
+                        name: dbName,
+                        orgID: orgID,
+                        retentionRules: []
+                    });
+                    const bucketReq = http.request({
+                        hostname: host,
+                        port: port,
+                        path: '/api/v2/buckets',
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Content-Length': Buffer.byteLength(body)
+                        }
+                    }, (res) => {
+                        if (res.statusCode === 201 || res.statusCode === 200) {
+                            console.log(`InfluxDB: bucket '${dbName}' created via v2 API`);
+                            resolve();
+                        } else {
+                            reject(new Error(`Bucket creation failed: HTTP ${res.statusCode}`));
+                        }
+                    });
+                    bucketReq.on('error', reject);
+                    bucketReq.write(body);
+                    bucketReq.end();
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }).on('error', reject);
+    });
+};
+
 const create_db = async (influxdb) => {
     try {
         const names = await influxdb.getDatabaseNames();
         if (names.indexOf(influxdb.config.database) === -1) {
             console.log(`InfluxDB: ${influxdb.config.database} database does not exist. Creating database`);
-            return influxdb.createDatabase(influxdb.config.database);
+            // Try v2 API first (InfluxDB 2.x), fall back to v1 (InfluxDB 1.x)
+            try {
+                return await _createBucketV2(influxdb);
+            } catch (v2Err) {
+                console.log(`InfluxDB: v2 bucket creation failed (${v2Err.message}), trying v1 CREATE DATABASE`);
+                return influxdb.createDatabase(influxdb.config.database);
+            }
         }
         console.log('InfluxDB', `${influxdb.config.database} database already exists. Skipping creation.`);
         return Promise.resolve();

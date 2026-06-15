@@ -12,8 +12,17 @@ Look for <my_garie_plugin> and modify it for your plugin.
 
 * `INFLUX_HOST` or `HOST` - influxdb host, default 'localhost'
 * `INFLUX_PORT` - influxdb port, default '8086'
-* `INFLUX_USERNAME` - influxdb user
-* `INFLUX_PASSWORD` - influxdb password
+* `INFLUX_TOKEN` - influxdb v2 auth token (used as password; username set to `'token'` automatically)
+* `INFLUX_ORG` - influxdb v2 org name, default `'garie'` (for bucket creation via v2 API)
+* `INFLUX_USERNAME` - influxdb v1 user (fallback when `INFLUX_TOKEN` not set)
+* `INFLUX_PASSWORD` - influxdb v1 password (fallback when `INFLUX_TOKEN` not set)
+
+**InfluxDB version support**: Works with InfluxDB 1.x and 2.7 (via v1 compat API).
+- When `INFLUX_TOKEN` is set, authenticates via token (v2) and creates buckets via v2
+API (`POST /api/v2/buckets`).
+- When `INFLUX_TOKEN` is not set, falls back to `INFLUX_USERNAME`/`INFLUX_PASSWORD`
+(v1 auth) and creates databases via `CREATE DATABASE` InfluxQL.
+- The `influx` npm v5 package is used for writes/queries in both modes.
 
 ## Helper functions
 Some common functions, what are used in most of our plugins are available in utils.helpers. These can be accessed like this:
